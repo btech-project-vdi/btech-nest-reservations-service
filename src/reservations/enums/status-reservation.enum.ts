@@ -1,0 +1,6 @@
+export enum StatusReservation {
+  PENDING = 'PENDIENTE',
+  CONFIRMED = 'CONFIRMADO',
+  COMPLETED = 'CULMINADO',
+  CANCELED = 'CANCELADO',
+}
