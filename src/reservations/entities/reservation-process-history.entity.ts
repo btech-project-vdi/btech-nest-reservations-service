@@ -1,9 +1,15 @@
 import { Timestamped } from 'src/common/entities/timestamped.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { ReservationLaboratoryEquipment } from './reservation-laboratory-equipment.entity';
 import { StatusResponse } from '../enums/status-response.enum';
 
-@Entity()
+@Entity({ name: 'reservationProcessHistory' })
 export class ReservationProcessHistory extends Timestamped {
   @PrimaryGeneratedColumn('uuid')
   reservationProcessHistoryId: string;
@@ -13,6 +19,7 @@ export class ReservationProcessHistory extends Timestamped {
     (reservationLaboratoryEquipment) =>
       reservationLaboratoryEquipment.reservationProcessHistory,
   )
+  @JoinColumn({ name: 'reservationLaboratoryEquipmentId' })
   reservationLaboratoryEquipe: ReservationLaboratoryEquipment;
 
   @Column({

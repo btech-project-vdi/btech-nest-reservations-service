@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -10,15 +11,16 @@ import { Timestamped } from 'src/common/entities/timestamped.entity';
 import { ReservationProcessHistory } from './reservation-process-history.entity';
 import { StatusReservation } from '../enums/status-reservation.enum';
 
-@Entity()
+@Entity({ name: 'reservationLaboratoryEquipment' })
 export class ReservationLaboratoryEquipment extends Timestamped {
   @PrimaryGeneratedColumn('uuid')
-  reservationLaboratoryEquipeId: string;
+  reservationLaboratoryEquipmentId: string;
 
   @ManyToOne(
     () => Reservation,
     (reservation) => reservation.reservationLaboratoryEquipment,
   )
+  @JoinColumn({ name: 'reservationId' })
   reservation: Reservation;
 
   @Column({
