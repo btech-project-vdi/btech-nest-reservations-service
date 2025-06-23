@@ -1,5 +1,16 @@
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
 import * as joi from 'joi';
+
+if (process.env.NODE_ENV === 'local') {
+  const envFile = '.env.local';
+  const result = dotenv.config({
+    path: `${process.cwd()}/${envFile}`,
+  });
+  if (result.error)
+    console.error(
+      `Error crítico al cargar el archivo .env.local: ${result.error.message}`,
+    );
+}
 
 interface EnvsVars {
   SERVER_PORT: number;
@@ -12,7 +23,6 @@ interface EnvsVars {
   DB_SYNCHRONIZE: boolean;
   ENCRYPTION_KEY: string;
   ENCRYPTION_ENABLED: boolean;
-  CORS_ORIGINS: string[];
 }
 
 const envsSchema = joi
@@ -26,6 +36,7 @@ const envsSchema = joi
     DB_SYNCHRONIZE: joi.boolean().default(true),
     ENCRYPTION_KEY: joi.string().required(),
     ENCRYPTION_ENABLED: joi.boolean().required(),
+    NATS_SERVERS: joi.array().items(joi.string()).required(),
   })
   .unknown(true);
 
