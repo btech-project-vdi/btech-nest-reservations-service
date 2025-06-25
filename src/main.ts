@@ -3,6 +3,9 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { envs } from './config/envs.config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { createValidationExceptionFactory } from './common/factories/create-validation-exception.factory';
+import { SERVICE_NAME } from './config/constants';
+import { ServiceIdentifierInterceptor } from './common/interceptors/service-identifier.interceptor';
 
 async function bootstrap() {
   const logger = new Logger('Main');
@@ -25,8 +28,10 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
+      exceptionFactory: createValidationExceptionFactory(SERVICE_NAME),
     }),
   );
+  app.useGlobalInterceptors(new ServiceIdentifierInterceptor(SERVICE_NAME));
   await app.listen();
   logger.log(`Microservice is running on port ${envs.server.port}`);
 }
