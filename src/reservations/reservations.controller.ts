@@ -4,6 +4,7 @@ import { ReservationsService } from './services/reservations.service';
 import { ReservationLaboratoryEquipmentService } from './services/reservation-laboratory-equipment.service';
 import { FindReservationsByEquipmentAndDateRangeDto } from './dto/find-reservations-by-equipment-and-date-range.dto';
 import { CreateReservationDto } from './dto/create-reservation.dto';
+import { UpdateReservationStatusDto } from './dto/update-reservation-status.dto';
 
 @Controller()
 export class ReservationsController {
@@ -12,6 +13,24 @@ export class ReservationsController {
     private readonly reservationLaboratoryEquipmentService: ReservationLaboratoryEquipmentService,
   ) {}
 
+  @MessagePattern('createReservation')
+  createReservation(@Payload() createReservationDto: CreateReservationDto) {
+    return this.reservationsService.createReservation(
+      createReservationDto.user,
+      createReservationDto,
+    );
+  }
+
+  @MessagePattern('updateReservationStatus')
+  updateReservationStatus(
+    @Payload()
+    updateReservationStatusDto: UpdateReservationStatusDto,
+  ) {
+    return this.reservationLaboratoryEquipmentService.updateStatus(
+      updateReservationStatusDto,
+    );
+  }
+
   @MessagePattern('findReservationsByEquipmentAndDateRange')
   findReservationsByEquipmentAndDateRange(
     @Payload()
@@ -19,14 +38,6 @@ export class ReservationsController {
   ) {
     return this.reservationLaboratoryEquipmentService.findReservationsByEquipmentAndDateRange(
       findReservationsByEquipmentAndDateRangeDto,
-    );
-  }
-
-  @MessagePattern('createReservation')
-  createReservation(@Payload() createReservationDto: CreateReservationDto) {
-    return this.reservationsService.createReservation(
-      createReservationDto.user,
-      createReservationDto,
     );
   }
 }

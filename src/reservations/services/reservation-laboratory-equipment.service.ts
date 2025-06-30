@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ReservationLaboratoryEquipment } from '../entities/reservation-laboratory-equipment.entity';
 import { Brackets, QueryRunner, Repository } from 'typeorm';
@@ -9,6 +9,9 @@ import {
 } from '../dto/find-reservations-by-equipment-and-date-range.dto';
 import { formatFindReservationsRangeResponse } from '../helpers/format-find-reservations-range-response.dto';
 import { CreateReservationDetailDto } from '../dto/create-reservation-detail.dto';
+import { RpcException } from '@nestjs/microservices';
+import { UpdateReservationStatusDto } from '../dto/update-reservation-status.dto';
+import { ResponseBaseMessageDto } from '../dto/response-base-message.dto';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentService {
@@ -39,6 +42,26 @@ export class ReservationLaboratoryEquipmentService {
     return await this.reservationLaboratoryEquipmentRepository.save(
       reservationDetail,
     );
+  }
+
+  async updateStatus(
+    updateReservationStatusDto: UpdateReservationStatusDto,
+  ): Promise<ResponseBaseMessageDto> {
+    const { reservationLaboratoryEquipmentId, status } =
+      updateReservationStatusDto;
+    const reservationLaboratory =
+      await this.reservationLaboratoryEquipmentRepository.update(
+        { reservationLaboratoryEquipmentId },
+        { status, updatedAt: new Date() },
+      );
+    if (reservationLaboratory.affected === 0)
+      throw new RpcException({
+        status: HttpStatus.NOT_FOUND,
+        message: `El estado de la reserva se actualizó con éxito`,
+      });
+    return {
+      message: `El item de reserva con el id ${reservationLaboratoryEquipmentId} fue actualizado con el estado ${status}`,
+    };
   }
 
   async findReservationsByEquipmentAndDateRange(
