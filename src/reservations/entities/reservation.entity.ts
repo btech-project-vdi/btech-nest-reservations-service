@@ -13,6 +13,13 @@ export class Reservation extends Timestamped {
   })
   subscriberId: string;
 
+  @Column({
+    type: 'varchar',
+    length: 65,
+    nullable: true,
+  })
+  username: string;
+
   @OneToMany(
     () => ReservationLaboratoryEquipment,
     (reservationLaboratoryEquipe) => reservationLaboratoryEquipe.reservation,

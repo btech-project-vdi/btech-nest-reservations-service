@@ -1,4 +1,4 @@
-import { ValidationError } from '@nestjs/common';
+import { HttpStatus, ValidationError } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 
 export const createValidationExceptionFactory = (serviceName: string) => {
@@ -9,7 +9,7 @@ export const createValidationExceptionFactory = (serviceName: string) => {
     });
 
     return new RpcException({
-      status: 400,
+      status: HttpStatus.BAD_REQUEST,
       message: formattedErrors,
       service: serviceName,
     });
