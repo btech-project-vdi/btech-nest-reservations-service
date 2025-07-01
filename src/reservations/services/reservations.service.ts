@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { CreateReservationDto } from '../dto/create-reservation.dto';
 import { ValidateUserResponseDto } from 'src/common/dto/validate-user-response.dto';
 import { ReservationLaboratoryEquipmentService } from './reservation-laboratory-equipment.service';
@@ -26,10 +26,23 @@ import { FindLaboratoriesByServiceIdsResponseDto } from 'src/common/dto/find-lab
 import { formatValidateHoursResponse } from '../helpers/formate-validate-hours-response.helper';
 import { formatReservationResponse } from '../helpers/format-reservation-response.helper';
 import { AvailableSlotDto } from '../dto/get-available-slot.dto';
+import {
+  ValidateRepeatedReservationDto,
+  ValidateRepeatedReservationResponseDto,
+} from '../dto/validate-repeated-reservation.dto';
+import { generatePotentialDates } from '../helpers/generate-potential-dates.helper';
+import { validateSingleReservation } from '../helpers/validate-single-reservation.helper';
+import {
+  FindAllReservationsDto,
+  FindAllReservationsResponseDto,
+} from '../dto/find-all-reservations.dto';
+import { formatFindReservationsResponse } from '../helpers/format-find-reservations-response.helper';
+import { FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto } from 'src/common/dto/find-one-laboratory-equipment-by-laboratory-equipment-id';
+import { paginate } from 'src/common/helpers/paginate.helper';
+import { Paginated } from 'src/common/interfaces/paginated.interface';
 
 @Injectable()
 export class ReservationsService {
-  private readonly logger = new Logger(ReservationsService.name);
   constructor(
     @InjectRepository(Reservation)
     private readonly reservationRepository: Repository<Reservation>,
@@ -75,6 +88,170 @@ export class ReservationsService {
     const reservationFormatted = formatReservationResponse(reservationSaved);
     // // await this.sendEmailForConfirmationReservation(reservationFormatted, user);
     return reservationFormatted;
+  }
+
+  async findAll(
+    user: ValidateUserResponseDto,
+    findAllReservationsDto: FindAllReservationsDto,
+  ): Promise<Paginated<FindAllReservationsResponseDto>> {
+    const { status, ...paginationDto } = findAllReservationsDto;
+    const queryBuilder = this.reservationRepository
+      .createQueryBuilder('reservation')
+      .leftJoinAndSelect('reservation.reservationLaboratoryEquipment', 'rle')
+      .select([
+        'reservation.reservationId',
+        'reservation.subscriberId',
+        'reservation.username',
+        'reservation.metadata',
+        'reservation.createdAt',
+        'rle.reservationLaboratoryEquipmentId',
+        'rle.laboratoryEquipmentId',
+        'rle.reservationDate',
+        'rle.reservationFinalDate',
+        'rle.initialHour',
+        'rle.finalHour',
+        'rle.metadata',
+      ])
+      .where('reservation.subscriberId = :subscriberId', {
+        subscriberId: user.subscriberId,
+      })
+      .orderBy('reservation.createdAt', 'DESC');
+
+    if (status)
+      queryBuilder.andWhere('rle.status IN (:...status)', {
+        status: Array.isArray(status) ? status : [status],
+      });
+    const reservations = await queryBuilder.getMany();
+    const equipmentMap = await this.findEquipmentMapData(reservations);
+
+    const reservationsResponseFormat = formatFindReservationsResponse(
+      reservations,
+      equipmentMap,
+    );
+    return paginate(reservationsResponseFormat, paginationDto);
+  }
+
+  async validateRepeatedReservation(
+    validateDto: ValidateRepeatedReservationDto,
+  ): Promise<{
+    validReservations: ValidateRepeatedReservationResponseDto[];
+    invalidReservations: ValidateRepeatedReservationResponseDto[];
+  }> {
+    const { programmingSubscriptionDetailId, laboratoryEquipmentId } =
+      validateDto;
+
+    const programmingDays =
+      await this.adminProgrammingService.findDaysWithDetails(
+        programmingSubscriptionDetailId,
+      );
+
+    const subscriptionDetail = programmingDays[0].programmingSubscriptionDetail;
+    const initialDateSubscription = new Date(subscriptionDetail.initialDate);
+    const finalDateSubscription = new Date(subscriptionDetail.finalDate);
+
+    const repeatStartDate = new Date(validateDto.initialDate);
+    const repeatEndDate = validateDto.repeatEndDate
+      ? new Date(validateDto.repeatEndDate)
+      : finalDateSubscription; // Validaciones de rango de repetición con la suscripción
+
+    if (repeatStartDate < initialDateSubscription)
+      throw new RpcException({
+        code: HttpStatus.BAD_REQUEST,
+        message: `La fecha de inicio de la repetición no puede ser anterior a la fecha inicial de la programación.`,
+      });
+
+    if (repeatEndDate > finalDateSubscription)
+      throw new RpcException({
+        code: HttpStatus.BAD_REQUEST,
+        message: `La fecha de finalización de la repetición no puede ser posterior a la fecha final de la programación.`,
+      });
+
+    if (repeatStartDate > repeatEndDate)
+      throw new RpcException({
+        code: HttpStatus.BAD_REQUEST,
+        message: `La fecha de inicio de la repetición no puede ser posterior a la fecha de finalización de la repetición.`,
+      });
+
+    const laboratoryEquipment =
+      await this.adminLaboratoriesService.findLaboratoryEquipmentByLaboratoryEquipmentId(
+        laboratoryEquipmentId,
+      );
+
+    const maxCapacity = laboratoryEquipment.quantity;
+    const labEquipmentId = laboratoryEquipmentId;
+
+    // ESTO SÍ ES CORRECTO.
+    const allRelevantExistingReservations =
+      await this.reservationLaboratoryEquipmentService.findReservationsByEquipmentAndDateRange(
+        {
+          laboratoryEquipmentId,
+          initialDate: repeatStartDate.toString(),
+          finalDate: repeatEndDate.toString(),
+        },
+      );
+
+    const potentialReservationInstances = generatePotentialDates(
+      repeatStartDate,
+      repeatEndDate,
+      validateDto.repeatPattern,
+      validateDto.daysOfWeek || [],
+      programmingDays,
+      validateDto.initialHour,
+      validateDto.finalHour,
+      new Date(validateDto.initialDate),
+      new Date(validateDto.finalDate),
+    ); // Validar disponibilidad para cada fecha potencial
+
+    const validationResults = await Promise.all(
+      potentialReservationInstances.map((reservationInstance) => {
+        return validateSingleReservation(
+          reservationInstance.reservationDate,
+          reservationInstance.reservationFinalDate,
+          validateDto.initialHour,
+          validateDto.finalHour,
+          labEquipmentId,
+          maxCapacity,
+          allRelevantExistingReservations,
+          programmingDays,
+        );
+      }),
+    );
+
+    const validReservations: ValidateRepeatedReservationResponseDto[] = [];
+    const invalidReservations: ValidateRepeatedReservationResponseDto[] = [];
+
+    validationResults.forEach((result, index) => {
+      const reservationInstance = potentialReservationInstances[index];
+      const reservationData = {
+        dayName: reservationInstance.reservationDate
+          .toLocaleDateString('es-ES', { weekday: 'long' })
+          .toLowerCase()
+          .replace(/^\w/, (c) => c.toUpperCase()),
+        laboratoryEquipeId: labEquipmentId,
+        initialDate: reservationInstance.reservationDate
+          .toISOString()
+          .split('T')[0],
+        finalDate: reservationInstance.reservationFinalDate
+          .toISOString()
+          .split('T')[0],
+        initialHour: validateDto.initialHour,
+        finalHour: validateDto.finalHour,
+      };
+
+      if (result.isValid) {
+        validReservations.push(reservationData);
+      } else {
+        invalidReservations.push({
+          ...reservationData,
+          reason: result.reason,
+        });
+      }
+    });
+
+    return {
+      validReservations,
+      invalidReservations,
+    };
   }
 
   private async prepareAndValidateReservation(
@@ -200,15 +377,11 @@ export class ReservationsService {
       userId,
     );
 
-    if (
-      initialDayAvailability.length === 0 ||
-      nextDayAvailability.length === 0
-    ) {
+    if (initialDayAvailability.length === 0 || nextDayAvailability.length === 0)
       throw new RpcException({
         status: HttpStatus.BAD_REQUEST,
         message: `El laboratorio no tiene programación disponible para la reserva que cruza medianoche entre ${detail.dayName} y ${nextDayName}`,
       });
-    }
   }
 
   private async validateSingleDayAvailability(
@@ -264,9 +437,7 @@ export class ReservationsService {
       await this.adminSubscriptionsService.findActiveSubscriptionDetailsByBusinessId(
         { subscriptionBussineId },
       );
-    if (!subscriptionDetails.length) {
-      return [];
-    }
+    if (!subscriptionDetails.length) return [];
     const subscriptionDetailIds = subscriptionDetails.map(
       (sd) => sd.subscriptionDetailId,
     );
@@ -281,9 +452,7 @@ export class ReservationsService {
         finalHour: finalHourString,
       });
 
-    if (!availableProgrammingHours.length) {
-      return [];
-    }
+    if (!availableProgrammingHours.length) return [];
 
     // 4. Obtener información de laboratorios
     const serviceIds = [
@@ -358,7 +527,6 @@ export class ReservationsService {
                 isAvailable: false,
               };
             }
-
             const overlappingReservationsCount =
               await this.reservationLaboratoryEquipmentService.checkAvailability(
                 le.laboratoryEquipmentId,
@@ -366,7 +534,6 @@ export class ReservationsService {
                 initialHourString,
                 finalHourString,
               );
-
             const availableQuantity =
               le.quantity - overlappingReservationsCount;
             return {
@@ -382,9 +549,7 @@ export class ReservationsService {
             };
           }),
         );
-
         const firstLab = laboratoriesInfo[0];
-
         return {
           laboratoryId: firstLab.laboratory.laboratoryId,
           laboratoryEquipmentId: firstLab.laboratoryEquipmentId,
@@ -400,5 +565,33 @@ export class ReservationsService {
         };
       }),
     );
+  }
+
+  private async findEquipmentMapData(
+    reservations: Reservation[],
+  ): Promise<
+    Map<string, FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto>
+  > {
+    const laboratoryEquipmentIds = [
+      ...new Set(
+        reservations
+          .flatMap((r) => r.reservationLaboratoryEquipment)
+          .map((rle) => rle.laboratoryEquipmentId)
+          .filter(Boolean),
+      ),
+    ];
+    const equipmentDataPromises = laboratoryEquipmentIds.map((id) =>
+      this.adminLaboratoriesService.findLaboratoryEquipmentByLaboratoryEquipmentId(
+        id,
+      ),
+    );
+    const equipmentData = await Promise.all(equipmentDataPromises);
+    const equipmentMap = new Map(
+      equipmentData.map((equipment) => [
+        equipment.laboratoryEquipmentId,
+        equipment,
+      ]),
+    );
+    return equipmentMap;
   }
 }

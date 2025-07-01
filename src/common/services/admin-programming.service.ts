@@ -4,6 +4,7 @@ import {
   FindAvailableProgrammingHoursDto,
   FindAvailableProgrammingHoursResponseDto,
 } from '../dto/find-available-programming-hours.dto';
+import { FindDaysWithDetailsDto } from '../dto/find-days-with-details.dto';
 
 @Injectable()
 export class AdminProgrammingService {
@@ -15,5 +16,13 @@ export class AdminProgrammingService {
       'findAvailableProgrammingHours',
       findAvailableProgrammingHoursDto,
     );
+  }
+
+  async findDaysWithDetails(
+    programmingSubscriptionDetailId: string,
+  ): Promise<FindDaysWithDetailsDto[]> {
+    return await this.client.send('findProgrammingDaysWithDetails', {
+      programmingSubscriptionDetailId,
+    });
   }
 }

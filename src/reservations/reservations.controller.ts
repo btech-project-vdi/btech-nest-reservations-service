@@ -5,6 +5,8 @@ import { ReservationLaboratoryEquipmentService } from './services/reservation-la
 import { FindReservationsByEquipmentAndDateRangeDto } from './dto/find-reservations-by-equipment-and-date-range.dto';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationStatusDto } from './dto/update-reservation-status.dto';
+import { ValidateRepeatedReservationDto } from './dto/validate-repeated-reservation.dto';
+import { FindAllReservationsDto } from './dto/find-all-reservations.dto';
 
 @Controller()
 export class ReservationsController {
@@ -19,6 +21,21 @@ export class ReservationsController {
       createReservationDto.user,
       createReservationDto,
     );
+  }
+
+  @MessagePattern('findReservations')
+  find(@Payload() findAllReservationsDto: FindAllReservationsDto) {
+    return this.reservationsService.findAll(
+      findAllReservationsDto.user,
+      findAllReservationsDto,
+    );
+  }
+
+  @MessagePattern('validateRepeatedReservation')
+  validateRepeatedReservation(
+    @Payload() validateDto: ValidateRepeatedReservationDto,
+  ) {
+    return this.reservationsService.validateRepeatedReservation(validateDto);
   }
 
   @MessagePattern('updateReservationStatus')
