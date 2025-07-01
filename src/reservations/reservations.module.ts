@@ -7,6 +7,7 @@ import { ReservationProcessHistory } from './entities/reservation-process-histor
 import { ReservationsService } from './services/reservations.service';
 import { ReservationLaboratoryEquipmentService } from './services/reservation-laboratory-equipment.service';
 import { CommonModule } from 'src/common/common.module';
+import { ReservationProcessHistoryService } from './services/reservation-process-history.service';
 
 @Module({
   imports: [
@@ -18,6 +19,15 @@ import { CommonModule } from 'src/common/common.module';
     CommonModule,
   ],
   controllers: [ReservationsController],
-  providers: [ReservationsService, ReservationLaboratoryEquipmentService],
+  providers: [
+    ReservationsService,
+    ReservationLaboratoryEquipmentService,
+    ReservationProcessHistoryService,
+  ],
+  exports: [
+    ReservationsService,
+    ReservationLaboratoryEquipmentService,
+    ReservationProcessHistoryService,
+  ],
 })
 export class ReservationsModule {}

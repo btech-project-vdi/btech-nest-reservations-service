@@ -122,7 +122,17 @@ export class ReservationsService {
         status: Array.isArray(status) ? status : [status],
       });
     const reservations = await queryBuilder.getMany();
-    const equipmentMap = await this.findEquipmentMapData(reservations);
+    const laboratoryEquipmentIds = [
+      ...new Set(
+        reservations
+          .flatMap((r) => r.reservationLaboratoryEquipment)
+          .map((rle) => rle.laboratoryEquipmentId)
+          .filter(Boolean),
+      ),
+    ];
+    const equipmentMap = await this.findEquipmentMapData(
+      laboratoryEquipmentIds,
+    );
 
     const reservationsResponseFormat = formatFindReservationsResponse(
       reservations,
@@ -567,19 +577,11 @@ export class ReservationsService {
     );
   }
 
-  private async findEquipmentMapData(
-    reservations: Reservation[],
+  async findEquipmentMapData(
+    laboratoryEquipmentIds: string[],
   ): Promise<
     Map<string, FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto>
   > {
-    const laboratoryEquipmentIds = [
-      ...new Set(
-        reservations
-          .flatMap((r) => r.reservationLaboratoryEquipment)
-          .map((rle) => rle.laboratoryEquipmentId)
-          .filter(Boolean),
-      ),
-    ];
     const equipmentDataPromises = laboratoryEquipmentIds.map((id) =>
       this.adminLaboratoriesService.findLaboratoryEquipmentByLaboratoryEquipmentId(
         id,
