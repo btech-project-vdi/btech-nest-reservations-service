@@ -2,12 +2,11 @@ import { IsEnum, IsOptional } from 'class-validator';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { StatusReservation } from '../enums/status-reservation.enum';
 import { ReservationDetailFindAllResponseDto } from './reservation-detail-find-all.dto';
-import { ValidateUserResponseDto } from 'src/common/dto/validate-user-response.dto';
-import { mockUserData } from 'src/common/data/mock-user-data';
+import { SessionUserDataDto } from 'src/common/dto/session-user-data-dto';
 
 export class FindAllReservationsDto extends PaginationDto {
   @IsOptional()
-  user: ValidateUserResponseDto = mockUserData;
+  user: SessionUserDataDto;
 
   @IsOptional()
   @IsEnum(StatusReservation, { each: true })

@@ -20,7 +20,7 @@ export class MessagingModule {
             transport: Transport.NATS,
             options: {
               servers: envs.messaging.servers,
-              queue: 'admin-laboratories-service-queue',
+              queue: 'reservations-service-queue',
               reconnect: true,
               maxReconnectAttempts: -1,
               reconnectTimeWait: 2000,

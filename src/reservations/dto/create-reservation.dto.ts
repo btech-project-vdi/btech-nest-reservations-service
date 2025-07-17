@@ -5,12 +5,11 @@ import {
   CreateReservationDetailResponseDto,
 } from './create-reservation-detail.dto';
 import { SubscriberInfoDto } from 'src/common/dto/subscriber-info.dto';
-import { mockUserData } from 'src/common/data/mock-user-data';
-import { ValidateUserResponseDto } from 'src/common/dto/validate-user-response.dto';
+import { SessionUserDataDto } from 'src/common/dto/session-user-data-dto';
 
 export class CreateReservationDto {
   @IsOptional()
-  user: ValidateUserResponseDto = mockUserData;
+  user: SessionUserDataDto;
 
   @IsOptional()
   metadata?: Record<string, any>;

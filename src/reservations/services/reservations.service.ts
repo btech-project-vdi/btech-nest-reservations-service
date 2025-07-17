@@ -1,6 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { CreateReservationDto } from '../dto/create-reservation.dto';
-import { ValidateUserResponseDto } from 'src/common/dto/validate-user-response.dto';
 import { ReservationLaboratoryEquipmentService } from './reservation-laboratory-equipment.service';
 import { CreateReservationDetailDto } from '../dto/create-reservation-detail.dto';
 import { ReservationLaboratoryEquipment } from '../entities/reservation-laboratory-equipment.entity';
@@ -40,6 +39,7 @@ import { formatFindReservationsResponse } from '../helpers/format-find-reservati
 import { FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto } from 'src/common/dto/find-one-laboratory-equipment-by-laboratory-equipment-id';
 import { paginate } from 'src/common/helpers/paginate.helper';
 import { Paginated } from 'src/common/interfaces/paginated.interface';
+import { SessionUserDataDto } from 'src/common/dto/session-user-data-dto';
 
 @Injectable()
 export class ReservationsService {
@@ -52,7 +52,7 @@ export class ReservationsService {
     private readonly adminSubscriptionsService: AdminSubscriptionsService,
   ) {}
   async createReservation(
-    user: ValidateUserResponseDto,
+    user: SessionUserDataDto,
     createReservationDto: CreateReservationDto,
   ) {
     const { metadata, reservationDetails } = createReservationDto;
@@ -91,7 +91,7 @@ export class ReservationsService {
   }
 
   async findAll(
-    user: ValidateUserResponseDto,
+    user: SessionUserDataDto,
     findAllReservationsDto: FindAllReservationsDto,
   ): Promise<Paginated<FindAllReservationsResponseDto>> {
     const { status, ...paginationDto } = findAllReservationsDto;
@@ -265,7 +265,7 @@ export class ReservationsService {
   }
 
   private async prepareAndValidateReservation(
-    user: ValidateUserResponseDto,
+    user: SessionUserDataDto,
     reservationDetails: CreateReservationDetailDto[],
   ): Promise<ReservationLaboratoryEquipment[]> {
     // 1. Validaciones "locales" (dentro de la misma solicitud)
@@ -314,7 +314,7 @@ export class ReservationsService {
   private async validateReservationDetail(
     detail: CreateReservationDetailDto,
     index: number,
-    user: ValidateUserResponseDto,
+    user: SessionUserDataDto,
     userId: string,
     existingUserReservations: ReservationLaboratoryEquipment[],
   ) {
@@ -353,7 +353,7 @@ export class ReservationsService {
 
   private async validateConsecutiveDaysAvailability(
     detail: CreateReservationDetailDto,
-    user: ValidateUserResponseDto,
+    user: SessionUserDataDto,
     userId: string,
     laboratory: FindOneByLaboratoryEquipmentIdResponseDto,
     nextDayName: string,
@@ -396,7 +396,7 @@ export class ReservationsService {
 
   private async validateSingleDayAvailability(
     detail: CreateReservationDetailDto,
-    user: ValidateUserResponseDto,
+    user: SessionUserDataDto,
     laboratory: FindOneByLaboratoryEquipmentIdResponseDto,
     userId: string,
   ) {
