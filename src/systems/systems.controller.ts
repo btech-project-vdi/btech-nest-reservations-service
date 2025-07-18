@@ -7,7 +7,7 @@ import { ConfirmReservationDto } from './dto/confirm-reservation.dto';
 @Controller('systems')
 export class SystemsController {
   constructor(private readonly systemsService: SystemsService) {}
-  @MessagePattern('confirmListReservationSystems')
+  @MessagePattern('system.confirmListReservationSystems')
   async confirmListReservation(
     @Payload() confirmListReservationDto: ConfirmListReservationDto,
   ) {
@@ -16,7 +16,7 @@ export class SystemsController {
     );
   }
 
-  @MessagePattern('confirmReservationSystems')
+  @MessagePattern('system.confirmReservationSystems')
   async confirmReservation(
     @Payload() confirmReservationDto: ConfirmReservationDto,
   ) {

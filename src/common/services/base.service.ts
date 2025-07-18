@@ -4,8 +4,8 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { PaginationDto } from '../dto/pagination.dto';
-import { Paginated } from '../interfaces/paginated.interface';
 import { paginate } from '../helpers/paginate.helper';
+import { Paginated } from '../dto/paginated.dto';
 
 @Injectable()
 export abstract class BaseService<T extends object> {

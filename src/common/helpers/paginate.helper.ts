@@ -1,5 +1,5 @@
+import { Paginated } from '../dto/paginated.dto';
 import { PaginationDto } from '../dto/pagination.dto';
-import { Paginated } from '../interfaces/paginated.interface';
 
 export const paginate = async <T>(
   data: T[],

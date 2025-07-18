@@ -1,4 +1,4 @@
-export interface Paginated<T> {
+export class Paginated<T> {
   data: T[];
   total: number;
   page: number;

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { MessagingService } from 'src/messaging/messaging.service';
 import { FindOneByLaboratoryEquipmentIdResponseDto } from '../dto/find-one-by-laboratory-equipment-id.dto';
-import { FindLaboratoriesByServiceIdsResponseDto } from '../dto/find-laboratories-by-service-ids.dto';
 import { FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto } from '../dto/find-one-laboratory-equipment-by-laboratory-equipment-id';
+import { FindLaboratoriesByLaboratoriesSubscriptionDetailIdsResponseDto } from '../dto/find-laboratories-by-laboratories-subscription-detail-ids.dto';
 
 @Injectable()
 export class AdminLaboratoriesService {
@@ -10,24 +10,30 @@ export class AdminLaboratoriesService {
   async findOneByLaboratoryEquipmentId(
     laboratoryEquipmentId: string,
   ): Promise<FindOneByLaboratoryEquipmentIdResponseDto> {
-    return await this.client.send('findLaboratoryByLaboratoryEquipmentId', {
-      laboratoryEquipmentId,
-    });
+    return await this.client.send(
+      'laboratoriesSubscriptionDetail.findOneByLaboratoryEquipmentId',
+      {
+        laboratoryEquipmentId,
+      },
+    );
   }
 
-  async findLaboratoriesByServiceIds(
-    serviceIds: string[],
-  ): Promise<FindLaboratoriesByServiceIdsResponseDto[]> {
-    return await this.client.send('findLaboratoriesByServiceIds', {
-      serviceIds,
-    });
+  async findByLaboratoriesSubscriptionDetailsIds(
+    laboratoriesSubscriptionDetailsIds: string[],
+  ): Promise<FindLaboratoriesByLaboratoriesSubscriptionDetailIdsResponseDto[]> {
+    return await this.client.send(
+      'laboratories.findByLaboratoriesSubscriptionDetailsIds',
+      {
+        laboratoriesSubscriptionDetailsIds,
+      },
+    );
   }
 
   async findLaboratoryEquipmentByLaboratoryEquipmentId(
     laboratoryEquipmentId: string,
   ): Promise<FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto> {
     return await this.client.send(
-      'findLaboratoryEquipmentByLaboratoryEquipmentId',
+      'laboratoryEquipment.findByLaboratoryEquipmentId',
       { laboratoryEquipmentId },
     );
   }

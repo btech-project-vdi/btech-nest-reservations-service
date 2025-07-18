@@ -21,7 +21,6 @@ import { Reservation } from '../entities/reservation.entity';
 import { Repository } from 'typeorm';
 import { AdminSubscriptionsService } from 'src/common/services/admin-subscriptions.service';
 import { FindAvailableProgrammingHoursResponseDto } from 'src/common/dto/find-available-programming-hours.dto';
-import { FindLaboratoriesByServiceIdsResponseDto } from 'src/common/dto/find-laboratories-by-service-ids.dto';
 import { formatValidateHoursResponse } from '../helpers/formate-validate-hours-response.helper';
 import { formatReservationResponse } from '../helpers/format-reservation-response.helper';
 import { AvailableSlotDto } from '../dto/get-available-slot.dto';
@@ -38,8 +37,9 @@ import {
 import { formatFindReservationsResponse } from '../helpers/format-find-reservations-response.helper';
 import { FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto } from 'src/common/dto/find-one-laboratory-equipment-by-laboratory-equipment-id';
 import { paginate } from 'src/common/helpers/paginate.helper';
-import { Paginated } from 'src/common/interfaces/paginated.interface';
 import { SessionUserDataDto } from 'src/common/dto/session-user-data-dto';
+import { FindLaboratoriesByLaboratoriesSubscriptionDetailIdsResponseDto } from 'src/common/dto/find-laboratories-by-laboratories-subscription-detail-ids.dto';
+import { Paginated } from 'src/common/dto/paginated.dto';
 
 @Injectable()
 export class ReservationsService {
@@ -365,7 +365,7 @@ export class ReservationsService {
         date: detail.initialDate.split('T')[0],
         initialHour: detail.initialHour,
         finalHour: '23:59',
-        subscriptionBussineId: user.subscription.subscriptionBussineId,
+        subscriptionDetailId: user.subscription.subscriptionDetailId,
         numberReservationDays: laboratory.parameters.numberReservationDay,
       },
       userId,
@@ -381,7 +381,7 @@ export class ReservationsService {
         date: nextDayDateStr,
         initialHour: '00:00',
         finalHour: detail.finalHour,
-        subscriptionBussineId: user.subscription.subscriptionBussineId,
+        subscriptionDetailId: user.subscription.subscriptionDetailId,
         numberReservationDays: laboratory.parameters.numberReservationDay,
       },
       userId,
@@ -406,7 +406,7 @@ export class ReservationsService {
         date: detail.initialDate.split('T')[0],
         initialHour: detail.initialHour,
         finalHour: detail.finalHour,
-        subscriptionBussineId: user.subscription.subscriptionBussineId,
+        subscriptionDetailId: user.subscription.subscriptionDetailId,
         numberReservationDays: laboratory.parameters.numberReservationDay,
       },
       userId,
@@ -428,7 +428,7 @@ export class ReservationsService {
       date,
       initialHour,
       finalHour,
-      subscriptionBussineId,
+      subscriptionDetailId,
       numberReservationDays,
     } = validateHoursDisponibilityDto;
 
@@ -443,19 +443,15 @@ export class ReservationsService {
       numberReservationDays,
     );
     // 2. Obtener subscription details activos
-    const subscriptionDetails =
-      await this.adminSubscriptionsService.findActiveSubscriptionDetailsByBusinessId(
-        { subscriptionBussineId },
+    const laboratoriesSubscriptionDetailsIds =
+      await this.adminSubscriptionsService.findLaboratoriesSubscriptionDetailsIdsBySubscriptionDetailId(
+        subscriptionDetailId,
       );
-    if (!subscriptionDetails.length) return [];
-    const subscriptionDetailIds = subscriptionDetails.map(
-      (sd) => sd.subscriptionDetailId,
-    );
 
     // 3. Obtener horarios de programación disponibles
     const availableProgrammingHours =
       await this.adminProgrammingService.findAvailableProgrammingHours({
-        subscriptionDetailIds,
+        laboratoriesSubscriptionDetailsIds,
         dayOfWeek,
         queryDate: queryDateFormatted,
         initialHour: initialHourString,
@@ -464,13 +460,9 @@ export class ReservationsService {
 
     if (!availableProgrammingHours.length) return [];
 
-    // 4. Obtener información de laboratorios
-    const serviceIds = [
-      ...new Set(subscriptionDetails.map((sd) => sd.serviceId)),
-    ];
     const laboratoriesInfo =
-      await this.adminLaboratoriesService.findLaboratoriesByServiceIds(
-        serviceIds,
+      await this.adminLaboratoriesService.findByLaboratoriesSubscriptionDetailsIds(
+        laboratoriesSubscriptionDetailsIds,
       );
 
     // 5. Verificar disponibilidad real
@@ -521,7 +513,7 @@ export class ReservationsService {
 
   private async getAvailableSlots(
     availableProgrammingHours: FindAvailableProgrammingHoursResponseDto[],
-    laboratoriesInfo: FindLaboratoriesByServiceIdsResponseDto[],
+    laboratoriesInfo: FindLaboratoriesByLaboratoriesSubscriptionDetailIdsResponseDto[],
     queryDateFormatted: string,
     initialHourString: string,
     finalHourString: string,

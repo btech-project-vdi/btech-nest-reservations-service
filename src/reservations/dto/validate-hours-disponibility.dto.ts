@@ -42,11 +42,11 @@ export class ValidateHoursDisponibilityDto {
   })
   finalHour: string;
 
-  @IsNotEmpty({ message: 'El ID de suscripción empresarial es requerido' })
+  @IsNotEmpty({ message: 'El ID de detalle de suscripción es requerido' })
   @IsUUID('all', {
-    message: 'El ID de suscripción empresarial debe ser un UUID válido',
+    message: 'El ID de detalle de suscripción debe ser un UUID válido',
   })
-  subscriptionBussineId: string;
+  subscriptionDetailId: string;
 
   @IsNotEmpty({ message: 'El número de días de reserva es requerido' })
   @IsInt({ message: 'El número de días de reserva debe ser un número entero' })

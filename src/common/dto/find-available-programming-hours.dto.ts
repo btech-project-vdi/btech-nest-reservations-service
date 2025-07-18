@@ -5,15 +5,18 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { NamesDay } from './names-day.enum';
+import { NamesDay } from '../enums/names-day.enum';
 
 export class FindAvailableProgrammingHoursDto {
-  @IsNotEmpty({ message: 'Los IDs de detalle de suscripción son requeridos' })
+  @IsNotEmpty({
+    message: 'Los IDs de laboratorio de detalle de suscripción son requeridos',
+  })
   @IsUUID('all', {
     each: true,
-    message: 'Cada ID de detalle de suscripción debe ser un UUID válido',
+    message:
+      'Cada ID de laboratorio de detalle de suscripción debe ser un UUID válido',
   })
-  subscriptionDetailIds: string[];
+  laboratoriesSubscriptionDetailsIds: string[];
 
   @IsNotEmpty({ message: 'El día de la semana es requerido' })
   @IsString({ message: 'El día de la semana debe ser un texto' })

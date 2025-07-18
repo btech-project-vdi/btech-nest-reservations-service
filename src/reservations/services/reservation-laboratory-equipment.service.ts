@@ -13,11 +13,11 @@ import { RpcException } from '@nestjs/microservices';
 import { UpdateReservationStatusDto } from '../dto/update-reservation-status.dto';
 import { ResponseBaseMessageDto } from '../dto/response-base-message.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { Paginated } from 'src/common/interfaces/paginated.interface';
 import { ConfirmListReservationResponseDto } from 'src/systems/dto/confirm-list-reservation.dto';
 import { formatConfirmListReservationResponse } from '../helpers/format-confirm-list-reservation-response.helper';
 import { ReservationsService } from './reservations.service';
 import { paginate } from 'src/common/helpers/paginate.helper';
+import { Paginated } from 'src/common/dto/paginated.dto';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentService {

@@ -15,7 +15,7 @@ export class ReservationsController {
     private readonly reservationLaboratoryEquipmentService: ReservationLaboratoryEquipmentService,
   ) {}
 
-  @MessagePattern('createReservation')
+  @MessagePattern('reservations.createReservation')
   createReservation(@Payload() createReservationDto: CreateReservationDto) {
     return this.reservationsService.createReservation(
       createReservationDto.user,
@@ -23,7 +23,7 @@ export class ReservationsController {
     );
   }
 
-  @MessagePattern('findReservations')
+  @MessagePattern('reservations.findReservations')
   find(@Payload() findAllReservationsDto: FindAllReservationsDto) {
     return this.reservationsService.findAll(
       findAllReservationsDto.user,
@@ -31,14 +31,14 @@ export class ReservationsController {
     );
   }
 
-  @MessagePattern('validateRepeatedReservation')
+  @MessagePattern('reservations.validateRepeatedReservation')
   validateRepeatedReservation(
     @Payload() validateDto: ValidateRepeatedReservationDto,
   ) {
     return this.reservationsService.validateRepeatedReservation(validateDto);
   }
 
-  @MessagePattern('updateReservationStatus')
+  @MessagePattern('reservations.updateReservationStatus')
   updateReservationStatus(
     @Payload()
     updateReservationStatusDto: UpdateReservationStatusDto,
@@ -48,7 +48,7 @@ export class ReservationsController {
     );
   }
 
-  @MessagePattern('findReservationsByEquipmentAndDateRange')
+  @MessagePattern('reservations.findReservationsByEquipmentAndDateRange')
   findReservationsByEquipmentAndDateRange(
     @Payload()
     findReservationsByEquipmentAndDateRangeDto: FindReservationsByEquipmentAndDateRangeDto,
