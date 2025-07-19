@@ -2,7 +2,7 @@ import { SubscriberInfoDto } from 'src/common/dto/subscriber-info.dto';
 import { LaboratoryEquipmentFindAllResponseDto } from './reservation-detail-find-all.dto';
 
 export class ConfirmListReservationDto {
-  reservationLaboratoryEquipeId: string;
+  reservationLaboratoryEquipmentId: string;
   createdAt: string;
   subscriber?: SubscriberInfoDto;
   laboratoryEquipment: LaboratoryEquipmentFindAllResponseDto;

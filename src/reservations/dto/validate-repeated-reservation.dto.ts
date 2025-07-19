@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   IsDateString,
   IsEnum,
@@ -93,7 +94,7 @@ export class ValidateRepeatedReservationDto {
 
 export class ValidateRepeatedReservationResponseDto {
   dayName: string;
-  laboratoryEquipeId: string;
+  laboratoryEquipmentId: string;
   initialDate: string;
   finalDate: string;
   initialHour: string;

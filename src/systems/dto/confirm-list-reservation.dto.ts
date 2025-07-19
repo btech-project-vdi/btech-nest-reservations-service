@@ -13,7 +13,7 @@ export class ConfirmListReservationDto extends PaginationDto {
 }
 
 export class ConfirmListReservationResponseDto {
-  reservationLaboratoryEquipeId: string;
+  reservationLaboratoryEquipmentId: string;
   createdAt: string;
   subscriber?: SubscriberInfoDto;
   laboratoryEquipment: LaboratoryEquipmentFindAllResponseDto;

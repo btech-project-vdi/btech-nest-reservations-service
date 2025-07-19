@@ -1,32 +1,39 @@
+import { HttpStatus } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 
 export const validateReservationHourRange = (
   initialHour: string,
   finalHour: string,
-  isSameDay: boolean, // Nuevo parámetro para indicar si es el mismo día
+  initialDate: string,
+  finalDate: string,
   index?: number,
 ) => {
-  // Solo validar si es el mismo día
+  const createDateTime = (date: string, time: string) => {
+    return new Date(`${date}T${time}:00`);
+  };
+  const initialDateTime = createDateTime(initialDate, initialHour);
+  const finalDateTime = createDateTime(finalDate, finalHour);
+
+  if (finalDateTime <= initialDateTime) {
+    throw new RpcException({
+      status: HttpStatus.BAD_REQUEST,
+      message:
+        `La fecha/hora final (${finalDate} ${finalHour}) debe ser posterior a la fecha/hora inicial (${initialDate} ${initialHour})` +
+        (index !== undefined ? ` (fila ${index + 1})` : ''),
+    });
+  }
+
+  const isSameDay = initialDate === finalDate;
   if (isSameDay) {
-    const toMinutes = (time: string) => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return hours * 60 + minutes;
-    };
-
-    const initial = toMinutes(initialHour);
-    const final = toMinutes(finalHour);
-
-    if (initial >= final)
+    const timeDifferenceMinutes =
+      (finalDateTime.getTime() - initialDateTime.getTime()) / (1000 * 60);
+    if (timeDifferenceMinutes < 30) {
       throw new RpcException({
-        status: 400,
+        status: HttpStatus.BAD_REQUEST,
         message:
-          `La hora inicial (${initialHour}) debe ser menor que la hora final (${finalHour})` +
+          `La reserva debe tener una duración mínima de 15 minutos. Duración actual: ${timeDifferenceMinutes} minutos` +
           (index !== undefined ? ` (fila ${index + 1})` : ''),
       });
-    if (initial === final)
-      throw new RpcException({
-        status: 400,
-        message: `La hora inicial (${initialHour}) y la hora final (${finalHour}) no pueden ser iguales`,
-      });
+    }
   }
 };

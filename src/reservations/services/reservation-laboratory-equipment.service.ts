@@ -65,7 +65,7 @@ export class ReservationLaboratoryEquipmentService {
     if (reservationLaboratory.affected === 0)
       throw new RpcException({
         status: HttpStatus.NOT_FOUND,
-        message: `El estado de la reserva se actualizó con éxito`,
+        message: `La reserva no se encuentra registrada`,
       });
     return {
       message: `El item de reserva con el id ${reservationLaboratoryEquipmentId} fue actualizado con el estado ${status}`,

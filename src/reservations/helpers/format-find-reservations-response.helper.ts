@@ -42,7 +42,8 @@ export const formatFindReservationsResponse = (
         const duration = Math.round(durationInMs / (1000 * 60));
 
         const reservationDetail: ReservationDetailFindAllResponseDto = {
-          reservationLaboratoryEquipeId: rle.reservationLaboratoryEquipmentId,
+          reservationLaboratoryEquipmentId:
+            rle.reservationLaboratoryEquipmentId,
           laboratoryEquipment: equipment
             ? ({
                 laboratoryEquipmentId: equipment.laboratoryEquipmentId,

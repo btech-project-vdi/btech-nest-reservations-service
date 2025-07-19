@@ -1,5 +1,5 @@
 export class ReservationDetailFindAllResponseDto {
-  reservationLaboratoryEquipeId: string;
+  reservationLaboratoryEquipmentId: string;
   laboratoryEquipment: LaboratoryEquipmentFindAllResponseDto;
   reservationDate: string;
   reservationFinalDate: string;

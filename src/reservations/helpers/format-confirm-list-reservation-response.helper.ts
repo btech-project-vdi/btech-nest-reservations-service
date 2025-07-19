@@ -14,7 +14,7 @@ export const formatConfirmListReservationResponse = (
     const equipment = equipmentMap.get(rle.laboratoryEquipmentId);
 
     const reservationDetail: ConfirmListReservationResponseDto = {
-      reservationLaboratoryEquipeId: rle.reservationLaboratoryEquipmentId,
+      reservationLaboratoryEquipmentId: rle.reservationLaboratoryEquipmentId,
       laboratoryEquipment: equipment
         ? {
             laboratoryEquipmentId: equipment.laboratoryEquipmentId,

@@ -237,7 +237,7 @@ export class ReservationsService {
           .toLocaleDateString('es-ES', { weekday: 'long' })
           .toLowerCase()
           .replace(/^\w/, (c) => c.toUpperCase()),
-        laboratoryEquipeId: labEquipmentId,
+        laboratoryEquipmentId: labEquipmentId,
         initialDate: reservationInstance.reservationDate
           .toISOString()
           .split('T')[0],
@@ -326,7 +326,8 @@ export class ReservationsService {
     validateReservationHourRange(
       detail.initialHour,
       detail.finalHour,
-      detail.initialDate === detail.finalDate,
+      detail.initialDate,
+      detail.finalDate,
       index,
     );
     checkExistingUserReservations(detail, existingUserReservations);
