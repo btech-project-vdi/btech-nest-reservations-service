@@ -15,7 +15,7 @@ export class ConfirmListReservationDto extends PaginationDto {
 export class ConfirmListReservationResponseDto {
   reservationLaboratoryEquipmentId: string;
   createdAt: string;
-  subscriber?: SubscriberInfoDto;
+  subscriber: SubscriberInfoDto;
   laboratoryEquipment: LaboratoryEquipmentFindAllResponseDto;
   reservationDate: string;
   reservationFinalDate: string;

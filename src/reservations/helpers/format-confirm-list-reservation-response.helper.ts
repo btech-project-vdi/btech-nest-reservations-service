@@ -15,6 +15,10 @@ export const formatConfirmListReservationResponse = (
 
     const reservationDetail: ConfirmListReservationResponseDto = {
       reservationLaboratoryEquipmentId: rle.reservationLaboratoryEquipmentId,
+      subscriber: {
+        subscriberId: rle.reservation.subscriberId,
+        username: rle.reservation.username,
+      },
       laboratoryEquipment: equipment
         ? {
             laboratoryEquipmentId: equipment.laboratoryEquipmentId,
