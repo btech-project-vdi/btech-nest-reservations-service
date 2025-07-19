@@ -13,7 +13,7 @@ export class AdminProgrammingService {
     findAvailableProgrammingHoursDto: FindAvailableProgrammingHoursDto,
   ): Promise<FindAvailableProgrammingHoursResponseDto[]> {
     return await this.client.send(
-      'findAvailableProgrammingHours',
+      'programming.findAvailableProgrammingHours',
       findAvailableProgrammingHoursDto,
     );
   }
@@ -21,8 +21,11 @@ export class AdminProgrammingService {
   async findDaysWithDetails(
     programmingSubscriptionDetailId: string,
   ): Promise<FindDaysWithDetailsDto[]> {
-    return await this.client.send('findProgrammingDaysWithDetails', {
-      programmingSubscriptionDetailId,
-    });
+    return await this.client.send(
+      'programming.findProgrammingDaysWithDetails',
+      {
+        programmingSubscriptionDetailId,
+      },
+    );
   }
 }
