@@ -19,7 +19,6 @@ import { StatusReservation } from '../enums/status-reservation.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Reservation } from '../entities/reservation.entity';
 import { Repository } from 'typeorm';
-import { AdminSubscriptionsService } from 'src/common/services/admin-subscriptions.service';
 import { FindAvailableProgrammingHoursResponseDto } from 'src/common/dto/find-available-programming-hours.dto';
 import { formatValidateHoursResponse } from '../helpers/formate-validate-hours-response.helper';
 import { formatReservationResponse } from '../helpers/format-reservation-response.helper';
@@ -49,7 +48,6 @@ export class ReservationsService {
     private readonly reservationLaboratoryEquipmentService: ReservationLaboratoryEquipmentService,
     private readonly adminLaboratoriesService: AdminLaboratoriesService,
     private readonly adminProgrammingService: AdminProgrammingService,
-    private readonly adminSubscriptionsService: AdminSubscriptionsService,
   ) {}
   async createReservation(
     user: SessionUserDataDto,
@@ -445,7 +443,7 @@ export class ReservationsService {
     );
     // 2. Obtener subscription details activos
     const laboratoriesSubscriptionDetailsIds =
-      await this.adminSubscriptionsService.findLaboratoriesSubscriptionDetailsIdsBySubscriptionDetailId(
+      await this.adminLaboratoriesService.findLaboratoriesSubscriptionDetailsIdsBySubscriptionDetailId(
         subscriptionDetailId,
       );
 

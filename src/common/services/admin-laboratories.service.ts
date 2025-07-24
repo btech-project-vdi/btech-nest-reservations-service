@@ -18,6 +18,15 @@ export class AdminLaboratoriesService {
     );
   }
 
+  async findLaboratoriesSubscriptionDetailsIdsBySubscriptionDetailId(
+    subscriptionDetailId: string,
+  ): Promise<string[]> {
+    return await this.client.send(
+      'laboratoriesSubscriptionDetail.findIdsBySubscriptionDetailId',
+      { subscriptionDetailId },
+    );
+  }
+
   async findByLaboratoriesSubscriptionDetailsIds(
     laboratoriesSubscriptionDetailsIds: string[],
   ): Promise<FindLaboratoriesByLaboratoriesSubscriptionDetailIdsResponseDto[]> {
