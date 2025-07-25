@@ -6,6 +6,7 @@ import {
 } from './create-reservation-detail.dto';
 import { SubscriberInfoDto } from 'src/common/dto/subscriber-info.dto';
 import { SessionUserDataDto } from 'src/common/dto/session-user-data-dto';
+import { InformationSubscriberDto } from './information-subscriber.dto';
 
 export class CreateReservationDto {
   @IsOptional()
@@ -18,6 +19,13 @@ export class CreateReservationDto {
   @ValidateNested({ each: true })
   @Type(() => CreateReservationDetailDto)
   reservationDetails: CreateReservationDetailDto[];
+
+  @ValidateNested({
+    message:
+      'La información del suscriptor es requerida y debe ser un objeto válido.',
+  })
+  @Type(() => InformationSubscriberDto)
+  informationSubscriber: InformationSubscriberDto;
 }
 
 export class CreateReservationResponseDto {

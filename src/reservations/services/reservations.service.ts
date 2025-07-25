@@ -1,5 +1,8 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { CreateReservationDto } from '../dto/create-reservation.dto';
+import {
+  CreateReservationDto,
+  CreateReservationResponseDto,
+} from '../dto/create-reservation.dto';
 import { ReservationLaboratoryEquipmentService } from './reservation-laboratory-equipment.service';
 import { CreateReservationDetailDto } from '../dto/create-reservation-detail.dto';
 import { ReservationLaboratoryEquipment } from '../entities/reservation-laboratory-equipment.entity';
@@ -39,6 +42,9 @@ import { paginate } from 'src/common/helpers/paginate.helper';
 import { SessionUserDataDto } from 'src/common/dto/session-user-data-dto';
 import { FindLaboratoriesByLaboratoriesSubscriptionDetailIdsResponseDto } from 'src/common/dto/find-laboratories-by-laboratories-subscription-detail-ids.dto';
 import { Paginated } from 'src/common/dto/paginated.dto';
+import { EmailsClient } from '../../grpc/clients/emails.client';
+import { formatDateToSpanish } from '../helpers/format-date-to-spanish.helper';
+import { InformationSubscriberDto } from '../dto/information-subscriber.dto';
 
 @Injectable()
 export class ReservationsService {
@@ -48,12 +54,14 @@ export class ReservationsService {
     private readonly reservationLaboratoryEquipmentService: ReservationLaboratoryEquipmentService,
     private readonly adminLaboratoriesService: AdminLaboratoriesService,
     private readonly adminProgrammingService: AdminProgrammingService,
+    private readonly EmailsClient: EmailsClient,
   ) {}
   async createReservation(
     user: SessionUserDataDto,
     createReservationDto: CreateReservationDto,
   ) {
-    const { metadata, reservationDetails } = createReservationDto;
+    const { metadata, reservationDetails, informationSubscriber } =
+      createReservationDto;
     const existingUserReservations = await this.prepareAndValidateReservation(
       user,
       reservationDetails,
@@ -84,7 +92,10 @@ export class ReservationsService {
     });
     const reservationSaved = await this.reservationRepository.save(reservation);
     const reservationFormatted = formatReservationResponse(reservationSaved);
-    // // await this.sendEmailForConfirmationReservation(reservationFormatted, user);
+    await this.sendEmailForConfirmationReservation(
+      reservationFormatted,
+      informationSubscriber,
+    );
     return reservationFormatted;
   }
 
@@ -586,5 +597,39 @@ export class ReservationsService {
       ]),
     );
     return equipmentMap;
+  }
+
+  private async sendEmailForConfirmationReservation(
+    reservation: CreateReservationResponseDto,
+    informationSubscriber: InformationSubscriberDto,
+  ) {
+    const { reservationLaboratoryEquipment } = reservation;
+
+    const details = await Promise.all(
+      reservationLaboratoryEquipment.map(async (rle) => {
+        const equipmentMap = await this.findEquipmentMapData([
+          rle.laboratoryEquipmentId,
+        ]);
+        const equipmentData = equipmentMap.get(rle.laboratoryEquipmentId);
+
+        return {
+          labDescription: equipmentData?.laboratory?.description || '',
+          equipmentDescription: equipmentData?.equipment?.description || '',
+          date: formatDateToSpanish(rle.reservationDate),
+          startTime: rle.initialHour,
+          endTime: rle.finalHour,
+        };
+      }),
+    );
+
+    await this.EmailsClient.sendLabReservationEmail({
+      to: informationSubscriber.email,
+      companyName: informationSubscriber.companyName,
+      logoUrl: informationSubscriber.logoUrl,
+      userName: informationSubscriber.subscriberName,
+      reservationDate: formatDateToSpanish(reservation.createdAt),
+      details,
+      primaryColor: informationSubscriber.primaryColor,
+    });
   }
 }

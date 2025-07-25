@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package emails;
+
+service EmailsService {
+  rpc SendLabReservationEmail(SendLabReservationEmailRequest) returns (SendEmailResponse);
+}
+
+message SendLabReservationEmailRequest {
+  string to = 1;
+  string companyName = 2;
+  string logoUrl = 3;
+  string userName = 4;
+  string reservationDate = 5;
+  repeated ReservationDetail details = 6;
+  string primaryColor = 7;
+}
+
+message ReservationDetail {
+  string labDescription = 1;
+  string equipmentDescription = 2;
+  string startTime = 3;
+  string endTime = 4;
+  string date = 5;
+}
+
+message SendEmailResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+}

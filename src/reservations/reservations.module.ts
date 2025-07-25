@@ -8,6 +8,7 @@ import { ReservationsService } from './services/reservations.service';
 import { ReservationLaboratoryEquipmentService } from './services/reservation-laboratory-equipment.service';
 import { CommonModule } from 'src/common/common.module';
 import { ReservationProcessHistoryService } from './services/reservation-process-history.service';
+import { GrpcModule } from '../grpc/grpc.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ReservationProcessHistoryService } from './services/reservation-process
       ReservationProcessHistory,
     ]),
     CommonModule,
+    GrpcModule,
   ],
   controllers: [ReservationsController],
   providers: [
