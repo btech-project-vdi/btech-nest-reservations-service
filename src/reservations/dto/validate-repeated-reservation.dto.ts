@@ -11,8 +11,12 @@ import {
 } from 'class-validator';
 import { RepeatPattern } from '../enums/repeat-pattern.enum';
 import { NamesDay } from '../enums/names-day.enum';
+import { SessionUserDataDto } from 'src/common/dto/session-user-data-dto';
 
 export class ValidateRepeatedReservationDto {
+  @IsNotEmpty({ message: 'El campo de usuario no puede estar vacío' })
+  user: SessionUserDataDto;
+
   @IsNotEmpty({
     message:
       'El campo de ID de la programación de la suscripción no puede estar vacío',

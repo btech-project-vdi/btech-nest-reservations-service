@@ -29,7 +29,7 @@ export const checkExistingUserReservations = (
     ) {
       throw new RpcException({
         status: HttpStatus.BAD_REQUEST,
-        message: `Ya tiene una reserva para el equipo '${existingRes.laboratoryEquipmentId}' el día ${newDate} en otra de sus reservas existentes. Un equipo no puede reservarse más de una vez por día para el mismo usuario.`,
+        message: `Ya tiene una reserva para el equipo seleccionado el día ${newDate} en otra de sus reservas existentes. Un equipo no puede reservarse más de una vez por día para el mismo usuario.`,
       });
     }
     if (existingResDate === newDate) {

@@ -45,6 +45,8 @@ import { Paginated } from 'src/common/dto/paginated.dto';
 import { EmailsClient } from '../../grpc/clients/emails.client';
 import { formatDateToSpanish } from '../helpers/format-date-to-spanish.helper';
 import { InformationSubscriberDto } from '../dto/information-subscriber.dto';
+import { validateRepeatedReservationDates } from '../helpers/validate-repeated-reservation-dates.helper';
+import { handleValidationError } from 'src/common/helpers/handle-validation-error.helper';
 
 @Injectable()
 export class ReservationsService {
@@ -156,40 +158,18 @@ export class ReservationsService {
     validReservations: ValidateRepeatedReservationResponseDto[];
     invalidReservations: ValidateRepeatedReservationResponseDto[];
   }> {
-    const { programmingSubscriptionDetailId, laboratoryEquipmentId } =
+    const { programmingSubscriptionDetailId, laboratoryEquipmentId, user } =
       validateDto;
-
     const programmingDays =
       await this.adminProgrammingService.findDaysWithDetails(
         programmingSubscriptionDetailId,
       );
 
-    const subscriptionDetail = programmingDays[0].programmingSubscriptionDetail;
-    const initialDateSubscription = new Date(subscriptionDetail.initialDate);
-    const finalDateSubscription = new Date(subscriptionDetail.finalDate);
-
-    const repeatStartDate = new Date(validateDto.initialDate);
-    const repeatEndDate = validateDto.repeatEndDate
-      ? new Date(validateDto.repeatEndDate)
-      : finalDateSubscription; // Validaciones de rango de repetición con la suscripción
-
-    if (repeatStartDate < initialDateSubscription)
-      throw new RpcException({
-        code: HttpStatus.BAD_REQUEST,
-        message: `La fecha de inicio de la repetición no puede ser anterior a la fecha inicial de la programación.`,
-      });
-
-    if (repeatEndDate > finalDateSubscription)
-      throw new RpcException({
-        code: HttpStatus.BAD_REQUEST,
-        message: `La fecha de finalización de la repetición no puede ser posterior a la fecha final de la programación.`,
-      });
-
-    if (repeatStartDate > repeatEndDate)
-      throw new RpcException({
-        code: HttpStatus.BAD_REQUEST,
-        message: `La fecha de inicio de la repetición no puede ser posterior a la fecha de finalización de la repetición.`,
-      });
+    const { repeatStartDate, repeatEndDate } = validateRepeatedReservationDates(
+      validateDto.initialDate,
+      validateDto.repeatEndDate,
+      programmingDays,
+    );
 
     const laboratoryEquipment =
       await this.adminLaboratoriesService.findLaboratoryEquipmentByLaboratoryEquipmentId(
@@ -208,6 +188,14 @@ export class ReservationsService {
           finalDate: repeatEndDate.toString(),
         },
       );
+    const searchEndDate = new Date(repeatEndDate.getTime());
+    searchEndDate.setDate(searchEndDate.getDate() + 1);
+    const existingUserReservations =
+      await this.reservationLaboratoryEquipmentService.findReservationsByUserAndDateRange(
+        user.subscriberId,
+        repeatStartDate,
+        searchEndDate,
+      );
 
     const potentialReservationInstances = generatePotentialDates(
       repeatStartDate,
@@ -223,7 +211,7 @@ export class ReservationsService {
 
     const validationResults = await Promise.all(
       potentialReservationInstances.map((reservationInstance) => {
-        return validateSingleReservation(
+        const equipmentAvailability = validateSingleReservation(
           reservationInstance.reservationDate,
           reservationInstance.reservationFinalDate,
           validateDto.initialHour,
@@ -233,6 +221,40 @@ export class ReservationsService {
           allRelevantExistingReservations,
           programmingDays,
         );
+        if (!equipmentAvailability.isValid) return equipmentAvailability;
+        try {
+          const reservationDetail = {
+            laboratoryEquipmentId: labEquipmentId,
+            initialDate: reservationInstance.reservationDate
+              .toISOString()
+              .split('T')[0],
+            initialHour: validateDto.initialHour,
+            finalDate: reservationInstance.reservationFinalDate
+              .toISOString()
+              .split('T')[0],
+            finalHour: validateDto.finalHour,
+            dayName: reservationInstance.reservationDate
+              .toLocaleDateString('es-ES', { weekday: 'long' })
+              .toLowerCase()
+              .replace(/^\w/, (c) => c.toUpperCase()),
+            metadata: {},
+          };
+          // Usar la función existente para validar conflictos del usuario
+          checkExistingUserReservations(
+            reservationDetail,
+            existingUserReservations,
+          );
+          return { isValid: true };
+        } catch (error) {
+          const errorMessage = handleValidationError(
+            error,
+            'Conflicto con reservas existentes del usuario',
+          );
+          return {
+            isValid: false,
+            reason: errorMessage,
+          };
+        }
       }),
     );
 
