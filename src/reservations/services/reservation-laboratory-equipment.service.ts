@@ -47,9 +47,7 @@ export class ReservationLaboratoryEquipmentService {
       reservationFinalDate: new Date(finalYear, finalMonth - 1, finalDay),
       finalHour: createReservationDetailDto.finalHour,
     });
-    return await this.reservationLaboratoryEquipmentRepository.save(
-      reservationDetail,
-    );
+    return await repository.save(reservationDetail);
   }
 
   async updateStatus(

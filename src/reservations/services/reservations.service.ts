@@ -47,6 +47,7 @@ import { formatDateToSpanish } from '../helpers/format-date-to-spanish.helper';
 import { InformationSubscriberDto } from '../dto/information-subscriber.dto';
 import { validateRepeatedReservationDates } from '../helpers/validate-repeated-reservation-dates.helper';
 import { handleValidationError } from 'src/common/helpers/handle-validation-error.helper';
+import { TransactionService } from 'src/common/services/transaction.service';
 
 @Injectable()
 export class ReservationsService {
@@ -56,6 +57,7 @@ export class ReservationsService {
     private readonly reservationLaboratoryEquipmentService: ReservationLaboratoryEquipmentService,
     private readonly adminLaboratoriesService: AdminLaboratoriesService,
     private readonly adminProgrammingService: AdminProgrammingService,
+    private readonly transactionService: TransactionService,
     private readonly EmailsClient: EmailsClient,
   ) {}
   async createReservation(
@@ -68,37 +70,45 @@ export class ReservationsService {
       user,
       reservationDetails,
     );
-    await Promise.all(
-      reservationDetails.map(async (detail, index) =>
-        this.validateReservationDetail(
-          detail,
-          index,
-          user,
-          user.subscriberId,
-          existingUserReservations,
-        ),
-      ),
-    );
-    const reservation = this.reservationRepository.create({
-      subscriberId: user.subscriberId,
-      username: user.username,
-      metadata: metadata ?? {
-        'Fecha de creación': new Date().toISOString(),
-        'Codigo de usuario': user.username,
+    return await this.transactionService.runInTransaction(
+      async (queryRunner) => {
+        await Promise.all(
+          reservationDetails.map(async (detail, index) =>
+            this.validateReservationDetail(
+              detail,
+              index,
+              user,
+              user.subscriberId,
+              existingUserReservations,
+            ),
+          ),
+        );
+        const reservation = queryRunner.manager.create(Reservation, {
+          subscriberId: user.subscriberId,
+          username: user.username,
+          metadata: metadata ?? {
+            'Fecha de creación': new Date().toISOString(),
+            'Codigo de usuario': user.username,
+          },
+          reservationLaboratoryEquipment: await Promise.all(
+            reservationDetails.map((detail) =>
+              this.reservationLaboratoryEquipmentService.create(
+                detail,
+                queryRunner,
+              ),
+            ),
+          ),
+        });
+        const reservationSaved = await queryRunner.manager.save(reservation);
+        const reservationFormatted =
+          formatReservationResponse(reservationSaved);
+        await this.sendEmailForConfirmationReservation(
+          reservationFormatted,
+          informationSubscriber,
+        );
+        return reservationFormatted;
       },
-      reservationLaboratoryEquipment: await Promise.all(
-        reservationDetails.map((detail) =>
-          this.reservationLaboratoryEquipmentService.create(detail),
-        ),
-      ),
-    });
-    const reservationSaved = await this.reservationRepository.save(reservation);
-    const reservationFormatted = formatReservationResponse(reservationSaved);
-    await this.sendEmailForConfirmationReservation(
-      reservationFormatted,
-      informationSubscriber,
     );
-    return reservationFormatted;
   }
 
   async findAll(
