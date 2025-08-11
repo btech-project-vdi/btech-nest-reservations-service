@@ -177,6 +177,7 @@ export class ReservationsService {
 
     const { repeatStartDate, repeatEndDate } = validateRepeatedReservationDates(
       validateDto.initialDate,
+      validateDto.initialHour,
       validateDto.repeatEndDate,
       programmingDays,
     );
