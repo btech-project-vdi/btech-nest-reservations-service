@@ -8,6 +8,11 @@ import { ReservationsService } from './services/reservations.service';
 import { ReservationLaboratoryEquipmentService } from './services/reservation-laboratory-equipment.service';
 import { CommonModule } from 'src/common/common.module';
 import { ReservationProcessHistoryService } from './services/reservation-process-history.service';
+import { ReservationsValidationService } from './services/reservations-validation.service';
+import { ReservationsAvailabilityService } from './services/reservations-availability.service';
+import { ReservationsNotificationService } from './services/reservations-notification.service';
+import { ReservationsRepeatedService } from './services/reservations-repeated.service';
+import { ReservationsCoreService } from './services/reservations-core.service';
 import { GrpcModule } from '../grpc/grpc.module';
 
 @Module({
@@ -23,8 +28,13 @@ import { GrpcModule } from '../grpc/grpc.module';
   controllers: [ReservationsController],
   providers: [
     ReservationsService,
+    ReservationsCoreService,
     ReservationLaboratoryEquipmentService,
     ReservationProcessHistoryService,
+    ReservationsValidationService,
+    ReservationsAvailabilityService,
+    ReservationsNotificationService,
+    ReservationsRepeatedService,
   ],
   exports: [
     ReservationsService,

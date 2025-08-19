@@ -1,7 +1,7 @@
 import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ReservationLaboratoryEquipment } from '../entities/reservation-laboratory-equipment.entity';
-import { Brackets, QueryRunner, Repository } from 'typeorm';
+import { Brackets, In, QueryRunner, Repository } from 'typeorm';
 import { StatusReservation } from '../enums/status-reservation.enum';
 import {
   FindReservationsByEquipmentAndDateRangeDto,
@@ -15,17 +15,18 @@ import { ResponseBaseMessageDto } from '../dto/response-base-message.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { ConfirmListReservationResponseDto } from 'src/systems/dto/confirm-list-reservation.dto';
 import { formatConfirmListReservationResponse } from '../helpers/format-confirm-list-reservation-response.helper';
-import { ReservationsService } from './reservations.service';
 import { paginate } from 'src/common/helpers/paginate.helper';
 import { Paginated } from 'src/common/dto/paginated.dto';
+import { CompleteFinishedReservationsResponseDto } from '../dto/complete-finished-reservations.dto';
+import { ReservationsCoreService } from './reservations-core.service';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentService {
   constructor(
     @InjectRepository(ReservationLaboratoryEquipment)
     private readonly reservationLaboratoryEquipmentRepository: Repository<ReservationLaboratoryEquipment>,
-    @Inject(forwardRef(() => ReservationsService))
-    private readonly reservationService: ReservationsService,
+    @Inject(forwardRef(() => ReservationsCoreService))
+    private readonly reservationCoreService: ReservationsCoreService,
   ) {}
   async create(
     createReservationDetailDto: CreateReservationDetailDto,
@@ -193,7 +194,7 @@ export class ReservationLaboratoryEquipmentService {
     const laboratoryEquipmentIds = reservationLaboratoryEquipment.map(
       (rle) => rle.laboratoryEquipmentId,
     );
-    const equipmentMap = await this.reservationService.findEquipmentMapData(
+    const equipmentMap = await this.reservationCoreService.findEquipmentMapData(
       laboratoryEquipmentIds,
     );
     const confirmListReservations = formatConfirmListReservationResponse(
@@ -201,5 +202,42 @@ export class ReservationLaboratoryEquipmentService {
       equipmentMap,
     );
     return await paginate(confirmListReservations, paginationDto);
+  }
+
+  async completeFinishedReservations(
+    currentDateTime: Date,
+  ): Promise<CompleteFinishedReservationsResponseDto> {
+    const finishedReservations =
+      await this.reservationLaboratoryEquipmentRepository
+        .createQueryBuilder('rle')
+        .where('rle.status = :status', {
+          status: StatusReservation.PENDING,
+        })
+        .andWhere(
+          `(
+          (rle.reservationFinalDate IS NULL AND 
+            CONCAT(rle.reservationDate, ' ', rle.finalHour) < :currentTime)
+          OR
+          (rle.reservationFinalDate IS NOT NULL AND 
+            CONCAT(rle.reservationFinalDate, ' ', rle.finalHour) < :currentTime)
+        )`,
+          { currentTime: currentDateTime },
+        )
+        .getMany();
+
+    if (finishedReservations.length > 0)
+      await this.reservationLaboratoryEquipmentRepository.update(
+        {
+          reservationLaboratoryEquipmentId: In(
+            finishedReservations.map((r) => r.reservationLaboratoryEquipmentId),
+          ),
+        },
+        { status: StatusReservation.COMPLETED },
+      );
+    return {
+      completedCount: finishedReservations.length,
+      executedAt: currentDateTime,
+      message: `Se completaron ${finishedReservations.length} reservas que habían terminado su tiempo programado`,
+    };
   }
 }
