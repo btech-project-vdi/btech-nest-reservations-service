@@ -40,6 +40,7 @@ import { GrpcModule } from '../grpc/grpc.module';
     ReservationsService,
     ReservationLaboratoryEquipmentService,
     ReservationProcessHistoryService,
+    ReservationsNotificationService,
   ],
 })
 export class ReservationsModule {}

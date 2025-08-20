@@ -19,6 +19,8 @@ import { paginate } from 'src/common/helpers/paginate.helper';
 import { Paginated } from 'src/common/dto/paginated.dto';
 import { CompleteFinishedReservationsResponseDto } from '../dto/complete-finished-reservations.dto';
 import { ReservationsCoreService } from './reservations-core.service';
+import { AdminLaboratoriesService } from '../../common/services/admin-laboratories.service';
+import { EmailsClient } from '../../grpc/clients/emails.client';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentService {
@@ -27,6 +29,8 @@ export class ReservationLaboratoryEquipmentService {
     private readonly reservationLaboratoryEquipmentRepository: Repository<ReservationLaboratoryEquipment>,
     @Inject(forwardRef(() => ReservationsCoreService))
     private readonly reservationCoreService: ReservationsCoreService,
+    private readonly adminLaboratoriesService: AdminLaboratoriesService,
+    private readonly emailsClient: EmailsClient,
   ) {}
   async create(
     createReservationDetailDto: CreateReservationDetailDto,
@@ -168,7 +172,6 @@ export class ReservationLaboratoryEquipmentService {
           ELSE CONCAT(rle.reservationDate, ' ', rle.finalHour)
         END AS DATETIME)
       `;
-          // La condición universal de solapamiento: (StartA < EndB) AND (EndA > StartB)
           qb.where(`:newResStart < ${rleEnd} AND :newResEnd > ${rleStart}`, {
             newResStart: newReservationStartDateTime, // Ya calculado correctamente en TS
             newResEnd: newReservationEndDateTime, // Ya calculado correctamente en TS
@@ -204,6 +207,24 @@ export class ReservationLaboratoryEquipmentService {
     return await paginate(confirmListReservations, paginationDto);
   }
 
+  async findReservationsForReminder(): Promise<
+    ReservationLaboratoryEquipment[]
+  > {
+    return await this.reservationLaboratoryEquipmentRepository
+      .createQueryBuilder('rle')
+      .leftJoinAndSelect('rle.reservation', 'reservation')
+      .where('rle.reminderEmailSent = false')
+      .andWhere('rle.reservationDate >= CURDATE()')
+      .andWhere('rle.status = :status', { status: StatusReservation.PENDING })
+      .getMany();
+  }
+
+  async markReminderEmailSent(reservationId: string): Promise<void> {
+    await this.reservationLaboratoryEquipmentRepository.update(reservationId, {
+      reminderEmailSent: true,
+    });
+  }
+
   async completeFinishedReservations(
     currentDateTime: Date,
   ): Promise<CompleteFinishedReservationsResponseDto> {
@@ -221,19 +242,23 @@ export class ReservationLaboratoryEquipmentService {
           (rle.reservationFinalDate IS NOT NULL AND 
             CONCAT(rle.reservationFinalDate, ' ', rle.finalHour) < :currentTime)
         )`,
-          { currentTime: currentDateTime },
+          {
+            currentTime: currentDateTime
+              .toISOString()
+              .slice(0, 19)
+              .replace('T', ' '),
+          },
         )
         .getMany();
 
-    if (finishedReservations.length > 0)
-      await this.reservationLaboratoryEquipmentRepository.update(
-        {
-          reservationLaboratoryEquipmentId: In(
-            finishedReservations.map((r) => r.reservationLaboratoryEquipmentId),
-          ),
-        },
-        { status: StatusReservation.COMPLETED },
-      );
+    await this.reservationLaboratoryEquipmentRepository.update(
+      {
+        reservationLaboratoryEquipmentId: In(
+          finishedReservations.map((fr) => fr.reservationLaboratoryEquipmentId),
+        ),
+      },
+      { status: StatusReservation.COMPLETED },
+    );
     return {
       completedCount: finishedReservations.length,
       executedAt: currentDateTime,

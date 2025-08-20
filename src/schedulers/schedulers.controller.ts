@@ -22,6 +22,12 @@ export class SchedulersController {
             'Marca como completadas las reservas que han terminado su tiempo programado',
           frequency: 'Cada 5 minutos',
         },
+        {
+          name: 'send-reservation-reminders',
+          description:
+            'Envía recordatorios por email a usuarios con reservas próximas',
+          frequency: 'Cada 5 minutos',
+        },
       ],
     };
   }

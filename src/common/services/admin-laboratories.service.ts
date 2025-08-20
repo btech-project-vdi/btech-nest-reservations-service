@@ -46,4 +46,13 @@ export class AdminLaboratoriesService {
       { laboratoryEquipmentId },
     );
   }
+
+  async findReminderMinutesByLaboratoryEquipmentId(
+    laboratoryEquipmentId: string,
+  ): Promise<{ reminderMinutesBefore: number }> {
+    return await this.client.send(
+      'laboratoriesSubscriptionDetail.findReminderMinutesByLaboratoryEquipmentId',
+      { laboratoryEquipmentId },
+    );
+  }
 }

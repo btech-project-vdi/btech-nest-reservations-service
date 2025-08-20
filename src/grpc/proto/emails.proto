@@ -4,6 +4,7 @@ package emails;
 
 service EmailsService {
   rpc SendLabReservationEmail(SendLabReservationEmailRequest) returns (SendEmailResponse);
+  rpc SendLabReservationReminderEmail(SendLabReservationReminderEmailRequest) returns (SendEmailResponse);
 }
 
 message SendLabReservationEmailRequest {
@@ -22,6 +23,20 @@ message ReservationDetail {
   string startTime = 3;
   string endTime = 4;
   string date = 5;
+}
+
+message SendLabReservationReminderEmailRequest {
+  string to = 1;
+  string companyName = 2;
+  string logoUrl = 3;
+  string userName = 4;
+  int32 reminderMinutes = 5;
+  string reservationDate = 6;
+  string startTime = 7;
+  string endTime = 8;
+  string labDescription = 9;
+  string equipmentDescription = 10;
+  string primaryColor = 11;
 }
 
 message SendEmailResponse {
