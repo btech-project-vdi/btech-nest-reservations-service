@@ -21,7 +21,7 @@ export class ValidateRepeatedReservationDto {
     message:
       'El campo de ID de la programación de la suscripción no puede estar vacío',
   })
-  @IsUUID('4', {
+  @IsUUID('all', {
     message:
       'El campo de ID de la programación de la suscripción debe ser un UUID',
   })
@@ -30,7 +30,7 @@ export class ValidateRepeatedReservationDto {
   @IsNotEmpty({
     message: 'El campo de ID del equipo de laboratorio no puede estar vacío',
   })
-  @IsUUID('4', {
+  @IsUUID('all', {
     message: 'El campo de ID del equipo de laboratorio no puede estar vacío',
   })
   laboratoryEquipmentId: string;
