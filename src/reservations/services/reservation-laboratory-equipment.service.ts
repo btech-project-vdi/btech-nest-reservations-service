@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ReservationLaboratoryEquipment } from '../entities/reservation-laboratory-equipment.entity';
@@ -19,8 +20,6 @@ import { paginate } from 'src/common/helpers/paginate.helper';
 import { Paginated } from 'src/common/dto/paginated.dto';
 import { CompleteFinishedReservationsResponseDto } from '../dto/complete-finished-reservations.dto';
 import { ReservationsCoreService } from './reservations-core.service';
-import { AdminLaboratoriesService } from '../../common/services/admin-laboratories.service';
-import { EmailsClient } from '../../grpc/clients/emails.client';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentService {
@@ -29,8 +28,6 @@ export class ReservationLaboratoryEquipmentService {
     private readonly reservationLaboratoryEquipmentRepository: Repository<ReservationLaboratoryEquipment>,
     @Inject(forwardRef(() => ReservationsCoreService))
     private readonly reservationCoreService: ReservationsCoreService,
-    private readonly adminLaboratoriesService: AdminLaboratoriesService,
-    private readonly emailsClient: EmailsClient,
   ) {}
   async create(
     createReservationDetailDto: CreateReservationDetailDto,
@@ -127,12 +124,16 @@ export class ReservationLaboratoryEquipmentService {
       .getMany();
   }
 
-  async checkAvailability(
-    labEquipmentId: string,
+  async checkAvailabilityBatch(
+    labEquipmentIds: string[],
     date: string,
     initialHour: string,
     finalHour: string,
-  ): Promise<number> {
+  ): Promise<Map<string, number>> {
+    if (!labEquipmentIds || labEquipmentIds.length === 0) {
+      return new Map();
+    }
+
     const newReservationStartDateTime = `${date} ${initialHour}`;
     let newReservationEndDateTime: string;
 
@@ -152,10 +153,12 @@ export class ReservationLaboratoryEquipmentService {
       newReservationEndDateTime = `${date} ${finalHour}`;
     }
 
-    return this.reservationLaboratoryEquipmentRepository
+    const results = await this.reservationLaboratoryEquipmentRepository
       .createQueryBuilder('rle')
-      .where('rle.laboratoryEquipmentId = :labEquipmentId', {
-        labEquipmentId,
+      .select('rle.laboratoryEquipmentId', 'laboratoryEquipmentId')
+      .addSelect('COUNT(*)', 'count')
+      .where('rle.laboratoryEquipmentId IN (:...labEquipmentIds)', {
+        labEquipmentIds,
       })
       .andWhere('rle.status IN (:...statuses)', {
         statuses: [StatusReservation.PENDING, StatusReservation.CONFIRMED],
@@ -173,12 +176,24 @@ export class ReservationLaboratoryEquipmentService {
         END AS DATETIME)
       `;
           qb.where(`:newResStart < ${rleEnd} AND :newResEnd > ${rleStart}`, {
-            newResStart: newReservationStartDateTime, // Ya calculado correctamente en TS
-            newResEnd: newReservationEndDateTime, // Ya calculado correctamente en TS
+            newResStart: newReservationStartDateTime,
+            newResEnd: newReservationEndDateTime,
           });
         }),
       )
-      .getCount();
+      .groupBy('rle.laboratoryEquipmentId')
+      .getRawMany();
+
+    // Convertir resultados a Map para lookup rápido
+    const countMap = new Map<string, number>();
+    // Inicializar todos los equipos con 0
+    labEquipmentIds.forEach((id) => countMap.set(id, 0));
+    // Actualizar con los valores reales
+    results.forEach((result) => {
+      countMap.set(result.laboratoryEquipmentId, parseInt(result.count, 10));
+    });
+
+    return countMap;
   }
 
   async confirmListReservation(

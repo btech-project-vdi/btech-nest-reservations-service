@@ -40,12 +40,14 @@ export class ReservationsAvailabilityService {
     const initialHourString = `${initialHour}:00`;
     const finalHourString = `${finalHour}:00`;
     const queryDateFormatted = queryDate.toISOString().split('T')[0];
+
     // 1. Validar límite de reservas del usuario
     await this.hasUserReachedReservationLimit(
       userId,
       queryDateFormatted,
       numberReservationDays,
     );
+
     // 2. Obtener subscription details activos
     const laboratoriesSubscriptionDetailsIds =
       await this.adminLaboratoriesService.findLaboratoriesSubscriptionDetailsIdsBySubscriptionDetailId(
@@ -77,6 +79,7 @@ export class ReservationsAvailabilityService {
       initialHourString,
       finalHourString,
     );
+
     const validSlots = resultWithAvailability.filter(
       (slot) =>
         slot &&
@@ -84,6 +87,7 @@ export class ReservationsAvailabilityService {
         slot.laboratory.equipment &&
         slot.laboratory.equipment.length > 0,
     );
+
     return validSlots.flatMap((slot: AvailableSlotDto) => {
       return formatValidateHoursResponse(slot);
     });
@@ -122,39 +126,48 @@ export class ReservationsAvailabilityService {
     initialHourString: string,
     finalHourString: string,
   ) {
+    // Optimización: Pre-cargar disponibilidad de todos los equipos de una vez
+    const laboratoryEquipmentIds = laboratoriesInfo
+      .map((le) => le.laboratoryEquipmentId)
+      .filter(Boolean);
+
+    const availabilityMap =
+      await this.reservationLaboratoryEquipmentService.checkAvailabilityBatch(
+        laboratoryEquipmentIds,
+        queryDateFormatted,
+        initialHourString,
+        finalHourString,
+      );
+
     return await Promise.all(
-      availableProgrammingHours.map(async (slot) => {
-        const equipmentWithAvailability = await Promise.all(
-          laboratoriesInfo.map(async (le) => {
-            if (!le.laboratoryEquipmentId) {
-              return {
-                ...le,
-                availableQuantity: 0,
-                isAvailable: false,
-              };
-            }
-            const overlappingReservationsCount =
-              await this.reservationLaboratoryEquipmentService.checkAvailability(
-                le.laboratoryEquipmentId,
-                queryDateFormatted,
-                initialHourString,
-                finalHourString,
-              );
-            const availableQuantity =
-              le.quantity - overlappingReservationsCount;
+      availableProgrammingHours.map((slot) => {
+        const equipmentWithAvailability = laboratoriesInfo.map((le) => {
+          if (!le.laboratoryEquipmentId) {
             return {
-              equipmentId: le.equipment.equipmentId,
-              description: le.equipment.description,
-              quantity: le.quantity,
-              availableQuantity,
-              isAvailable: availableQuantity > 0,
-              resources: le.equipment.equipmentResources.map((er) => ({
-                attribute: er.attribute.description,
-                resource: er.description,
-              })),
+              ...le,
+              availableQuantity: 0,
+              isAvailable: false,
             };
-          }),
-        );
+          }
+
+          // Usar disponibilidad pre-cargada en lugar de consulta individual
+          const overlappingReservationsCount =
+            availabilityMap.get(le.laboratoryEquipmentId) || 0;
+          const availableQuantity = le.quantity - overlappingReservationsCount;
+
+          return {
+            equipmentId: le.equipment.equipmentId,
+            description: le.equipment.description,
+            quantity: le.quantity,
+            availableQuantity,
+            isAvailable: availableQuantity > 0,
+            resources: le.equipment.equipmentResources.map((er) => ({
+              attribute: er.attribute.description,
+              resource: er.description,
+            })),
+          };
+        });
+
         const firstLab = laboratoriesInfo[0];
         return {
           laboratoryId: firstLab.laboratory.laboratoryId,

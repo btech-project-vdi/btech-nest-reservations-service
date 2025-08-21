@@ -19,7 +19,6 @@ import { ReservationLaboratoryEquipmentService } from './reservation-laboratory-
 import { ReservationsValidationService } from './reservations-validation.service';
 import { ReservationsAvailabilityService } from './reservations-availability.service';
 import { ReservationsNotificationService } from './reservations-notification.service';
-import { ReservationsRepeatedService } from './reservations-repeated.service';
 import { AdminLaboratoriesService } from '../../common/services/admin-laboratories.service';
 import { TransactionService } from 'src/common/services/transaction.service';
 
@@ -37,7 +36,6 @@ export class ReservationsCoreService {
     private readonly reservationsValidationService: ReservationsValidationService,
     private readonly reservationsAvailabilityService: ReservationsAvailabilityService,
     private readonly reservationsNotificationService: ReservationsNotificationService,
-    private readonly reservationsRepeatedService: ReservationsRepeatedService,
     private readonly adminLaboratoriesService: AdminLaboratoriesService,
     private readonly transactionService: TransactionService,
   ) {}
@@ -98,7 +96,7 @@ export class ReservationsCoreService {
         const equipmentMap = await this.findEquipmentMapData(
           laboratoryEquipmentIds,
         );
-        await this.reservationsNotificationService.sendEmailForConfirmationReservation(
+        this.reservationsNotificationService.sendEmailForConfirmationReservation(
           reservationFormatted,
           informationSubscriber,
           equipmentMap,
