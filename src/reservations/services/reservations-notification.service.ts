@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { CreateReservationResponseDto } from '../dto/create-reservation.dto';
 import { InformationSubscriberDto } from '../dto/information-subscriber.dto';
 import { EmailsClient } from '../../grpc/clients/emails.client';
@@ -11,6 +11,8 @@ import { SendReservationRemindersResponseDto } from '../dto/send-reservation-rem
 
 @Injectable()
 export class ReservationsNotificationService {
+  private readonly logger = new Logger(ReservationsNotificationService.name);
+
   constructor(
     private readonly emailsClient: EmailsClient,
     private readonly reservationLaboratoryEquipmentService: ReservationLaboratoryEquipmentService,
@@ -26,30 +28,37 @@ export class ReservationsNotificationService {
       string,
       FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto
     >,
-  ) {
-    const { reservationLaboratoryEquipment } = reservation;
+  ): Promise<void> {
+    try {
+      const { reservationLaboratoryEquipment } = reservation;
 
-    const details = reservationLaboratoryEquipment.map((rle) => {
-      const equipmentData = equipmentMap.get(rle.laboratoryEquipmentId);
+      const details = reservationLaboratoryEquipment.map((rle) => {
+        const equipmentData = equipmentMap.get(rle.laboratoryEquipmentId);
 
-      return {
-        labDescription: equipmentData?.laboratory?.description || '',
-        equipmentDescription: equipmentData?.equipment?.description || '',
-        date: formatDateToSpanish(rle.reservationDate),
-        startTime: rle.initialHour,
-        endTime: rle.finalHour,
-      };
-    });
+        return {
+          labDescription: equipmentData?.laboratory?.description || '',
+          equipmentDescription: equipmentData?.equipment?.description || '',
+          date: formatDateToSpanish(rle.reservationDate),
+          startTime: rle.initialHour,
+          endTime: rle.finalHour,
+        };
+      });
 
-    await this.emailsClient.sendLabReservationEmail({
-      to: informationSubscriber.email,
-      companyName: informationSubscriber.companyName,
-      logoUrl: informationSubscriber.logoUrl,
-      userName: informationSubscriber.subscriberName,
-      reservationDate: formatDateToSpanish(reservation.createdAt),
-      details,
-      primaryColor: informationSubscriber.primaryColor,
-    });
+      await this.emailsClient.sendLabReservationEmail({
+        to: informationSubscriber.email,
+        companyName: informationSubscriber.companyName,
+        logoUrl: informationSubscriber.logoUrl,
+        userName: informationSubscriber.subscriberName,
+        reservationDate: formatDateToSpanish(reservation.createdAt),
+        details,
+        primaryColor: informationSubscriber.primaryColor,
+      });
+    } catch (error) {
+      this.logger.error(
+        'Error enviando correo de confirmación de reserva',
+        error,
+      );
+    }
   }
 
   async sendReservationReminders(
@@ -114,8 +123,8 @@ export class ReservationsNotificationService {
           sent++;
         }
       } catch (error) {
-        console.error(
-          `Error enviando recordatorio para reserva ${reservationEquipment.reservationLaboratoryEquipmentId}:`,
+        this.logger.error(
+          `Error enviando recordatorio para reserva ${reservationEquipment.reservationLaboratoryEquipmentId}`,
           error,
         );
       }
