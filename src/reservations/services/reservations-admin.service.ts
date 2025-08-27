@@ -18,6 +18,7 @@ import {
   FindSubscribersWithNaturalPersonsDto,
   FindSubscribersWithNaturalPersonsResponseDto,
 } from 'src/grpc/dto/find-subscribers-with-natural-persons.dto';
+import { filterSubscribersByTerm } from '../helpers/filter-subscribers-by-term.helper';
 
 @Injectable()
 export class ReservationsAdminService {
@@ -207,11 +208,21 @@ export class ReservationsAdminService {
   async findSubscribersList(
     findSubscribersListDto: FindSubscribersListDto,
   ): Promise<FindSubscribersWithNaturalPersonsResponseDto> {
+    const { term, ...restDto } = findSubscribersListDto;
     const grpcDto: FindSubscribersWithNaturalPersonsDto = {
-      subscriptionDetailId: findSubscribersListDto.subscriptionDetailId,
-      page: findSubscribersListDto.page || 1,
-      limit: findSubscribersListDto.limit || 10,
+      subscriptionDetailId: restDto.subscriptionDetailId,
+      page: restDto.page || 1,
+      limit: restDto.limit || 10,
     };
-    return this.subscribersClient.findSubscribersWithNaturalPersons(grpcDto);
+    const response =
+      await this.subscribersClient.findSubscribersWithNaturalPersons(grpcDto);
+    if (!term || term.trim() === '') return response;
+    const filteredData = filterSubscribersByTerm(response.data, term);
+    return {
+      ...response,
+      data: filteredData,
+      total: filteredData.length,
+      totalPages: Math.ceil(filteredData.length / (restDto.limit || 10)),
+    };
   }
 }
