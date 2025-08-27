@@ -7,12 +7,16 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationStatusDto } from './dto/update-reservation-status.dto';
 import { ValidateRepeatedReservationDto } from './dto/validate-repeated-reservation.dto';
 import { FindAllReservationsDto } from './dto/find-all-reservations.dto';
+import { ReservationsAdminService } from './services/reservations-admin.service';
+import { FindAdminReservationsDto } from './dto/find-admin-reservations.dto';
+import { FindSubscribersListDto } from './dto/find-subscribers-list.dto';
 
 @Controller()
 export class ReservationsController {
   constructor(
     private readonly reservationsService: ReservationsService,
     private readonly reservationLaboratoryEquipmentService: ReservationLaboratoryEquipmentService,
+    private readonly reservationsAdminService: ReservationsAdminService,
   ) {}
 
   @MessagePattern('reservations.createReservation')
@@ -55,6 +59,24 @@ export class ReservationsController {
   ) {
     return this.reservationLaboratoryEquipmentService.findReservationsByEquipmentAndDateRange(
       findReservationsByEquipmentAndDateRangeDto,
+    );
+  }
+
+  @MessagePattern('reservations.findAdminReservations')
+  findAdminReservations(
+    @Payload() findAdminReservationsDto: FindAdminReservationsDto,
+  ) {
+    return this.reservationsAdminService.findAdminReservations(
+      findAdminReservationsDto,
+    );
+  }
+
+  @MessagePattern('reservations.findSubscribersList')
+  findSubscribersList(
+    @Payload() findSubscribersListDto: FindSubscribersListDto,
+  ) {
+    return this.reservationsAdminService.findSubscribersList(
+      findSubscribersListDto,
     );
   }
 }

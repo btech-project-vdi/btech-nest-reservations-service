@@ -14,6 +14,7 @@ import { ReservationsNotificationService } from './services/reservations-notific
 import { ReservationsRepeatedService } from './services/reservations-repeated.service';
 import { ReservationsCoreService } from './services/reservations-core.service';
 import { GrpcModule } from '../grpc/grpc.module';
+import { ReservationsAdminService } from './services/reservations-admin.service';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { GrpcModule } from '../grpc/grpc.module';
     ReservationsAvailabilityService,
     ReservationsNotificationService,
     ReservationsRepeatedService,
+    ReservationsAdminService,
   ],
   exports: [
     ReservationsService,

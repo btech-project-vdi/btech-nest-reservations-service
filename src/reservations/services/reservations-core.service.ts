@@ -110,7 +110,8 @@ export class ReservationsCoreService {
     user: SessionUserDataDto,
     findAllReservationsDto: FindAllReservationsDto,
   ): Promise<Paginated<FindAllReservationsResponseDto>> {
-    const { status, ...paginationDto } = findAllReservationsDto;
+    const { status, itemPage, itemLimit, ...paginationDto } =
+      findAllReservationsDto;
     const queryBuilder = this.reservationRepository
       .createQueryBuilder('reservation')
       .leftJoinAndSelect('reservation.reservationLaboratoryEquipment', 'rle')
@@ -154,6 +155,7 @@ export class ReservationsCoreService {
     const reservationsResponseFormat = formatFindReservationsResponse(
       reservations,
       equipmentMap,
+      { itemPage, itemLimit },
     );
 
     return paginate(reservationsResponseFormat, paginationDto);

@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package subscribers;
+
+service SubscribersService {
+  rpc FindSubscribersWithNaturalPersons(FindSubscribersWithNaturalPersonsRequest) returns (FindSubscribersWithNaturalPersonsResponse);
+}
+
+message FindSubscribersWithNaturalPersonsRequest {
+  string subscriptionDetailId = 1;
+  optional int32 page = 2;
+  optional int32 limit = 3;
+}
+
+message PersonInformation {
+  string informationType = 1;
+  string description = 2;
+}
+
+message NaturalPersonCompleteInfo {
+  string naturalPersonId = 1;
+  string personId = 2;
+  string fullName = 3;
+  string paternalSurname = 4;
+  string maternalSurname = 5;
+  string documentNumber = 6;
+  string documentType = 7;
+  repeated PersonInformation personInformation = 8;
+}
+
+message SubscriberWithNaturalPersonData {
+  string subscriberId = 1;
+  string username = 2;
+  NaturalPersonCompleteInfo naturalPerson = 3;
+}
+
+message FindSubscribersWithNaturalPersonsResponse {
+  repeated SubscriberWithNaturalPersonData data = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  int32 totalPages = 5;
+}

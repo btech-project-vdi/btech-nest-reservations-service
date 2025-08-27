@@ -12,22 +12,33 @@ export const formatFindReservationsResponse = (
     string,
     FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto
   >,
+  itemPagination?: { itemPage?: number; itemLimit?: number },
 ): FindAllReservationsResponseDto[] => {
-  return reservations.map((reservation) => ({
-    reservationId: reservation.reservationId,
-    subscriberId: reservation.subscriberId,
-    username: reservation.username,
-    metadata: reservation.metadata,
-    createdAt: reservation.createdAt.toISOString(),
-    reservationLaboratoryEquipment: reservation.reservationLaboratoryEquipment
-      .sort((a, b) => {
+  const { itemPage = 1, itemLimit = 10 } = itemPagination || {};
+
+  return reservations.map((reservation) => {
+    const sortedItems = reservation.reservationLaboratoryEquipment.sort(
+      (a, b) => {
         // Ordenar por fecha y luego por hora inicial
         const dateA = new Date(a.reservationDate).getTime();
         const dateB = new Date(b.reservationDate).getTime();
         if (dateA !== dateB) return dateA - dateB;
         return a.initialHour.localeCompare(b.initialHour);
-      })
-      .map((rle) => {
+      },
+    );
+
+    // Aplicar paginación a los items
+    const startIndex = (itemPage - 1) * itemLimit;
+    const endIndex = startIndex + itemLimit;
+    const paginatedItems = sortedItems.slice(startIndex, endIndex);
+
+    return {
+      reservationId: reservation.reservationId,
+      subscriberId: reservation.subscriberId,
+      username: reservation.username,
+      metadata: reservation.metadata,
+      createdAt: reservation.createdAt.toISOString(),
+      reservationLaboratoryEquipment: paginatedItems.map((rle) => {
         const equipment = equipmentMap.get(rle.laboratoryEquipmentId);
         const startDate = new Date(rle.reservationDate);
         const endDate = new Date(rle.reservationFinalDate);
@@ -63,5 +74,11 @@ export const formatFindReservationsResponse = (
 
         return reservationDetail;
       }),
-  }));
+      // Información de paginación de items para esta reserva
+      total: sortedItems.length,
+      page: itemPage,
+      limit: itemLimit,
+      totalPages: Math.ceil(sortedItems.length / itemLimit),
+    };
+  });
 };

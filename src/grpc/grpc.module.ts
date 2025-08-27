@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
-import { EMAILS_SERVICE } from 'src/config/constants';
+import {
+  ADMIN_SUBSCRIPTIONS_SERVICE,
+  EMAILS_SERVICE,
+} from 'src/config/constants';
 import { envs } from 'src/config/envs.config';
 import { EmailsClient } from './clients/emails.client';
+import { SubscribersClient } from './clients/subscribers.client';
 
 @Module({
   imports: [
@@ -26,9 +30,27 @@ import { EmailsClient } from './clients/emails.client';
           },
         },
       },
+      {
+        name: ADMIN_SUBSCRIPTIONS_SERVICE,
+        transport: Transport.GRPC,
+        options: {
+          package: 'subscribers',
+          protoPath: join(process.cwd(), 'src/grpc/proto/subscribers.proto'),
+          url: envs.grpc.subscribersUrl,
+          keepalive: {
+            keepaliveTimeMs: 30000,
+            keepaliveTimeoutMs: 5000,
+            keepalivePermitWithoutCalls: 1,
+          },
+          loader: {
+            keepCase: true,
+            defaults: true,
+          },
+        },
+      },
     ]),
   ],
-  providers: [EmailsClient],
-  exports: [EmailsClient],
+  providers: [EmailsClient, SubscribersClient],
+  exports: [EmailsClient, SubscribersClient],
 })
 export class GrpcModule {}
