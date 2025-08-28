@@ -132,26 +132,35 @@ export class ReservationsAdminService {
       case TimePeriod.LAST_DAY:
         fromDate = new Date(now);
         fromDate.setDate(now.getDate() - 1);
+        toDate = new Date(now);
+        toDate.setHours(23, 59, 59, 999);
         break;
 
       case TimePeriod.LAST_WEEK:
         fromDate = new Date(now);
         fromDate.setDate(now.getDate() - 7);
+        toDate = new Date(now);
+        toDate.setHours(23, 59, 59, 999);
         break;
 
       case TimePeriod.LAST_30_DAYS:
         fromDate = new Date(now);
         fromDate.setDate(now.getDate() - 30);
+        toDate = new Date(now);
+        toDate.setHours(23, 59, 59, 999);
         break;
 
       case TimePeriod.LAST_3_MONTHS:
         fromDate = new Date(now);
         fromDate.setMonth(now.getMonth() - 3);
+        toDate = new Date(now);
+        toDate.setHours(23, 59, 59, 999);
         break;
 
       case TimePeriod.LAST_YEAR:
-        fromDate = new Date(now);
-        fromDate.setFullYear(now.getFullYear() - 1);
+        fromDate = new Date(now.getFullYear(), 0, 1); // January 1st of current year
+        toDate = new Date(now.getFullYear(), 11, 31); // December 31st of current year
+        toDate.setHours(23, 59, 59, 999);
         break;
 
       case TimePeriod.CURRENT_MONTH:
@@ -176,13 +185,10 @@ export class ReservationsAdminService {
     startTime?: string,
     endTime?: string,
   ): void {
-    if (startTime) {
+    if (startTime)
       queryBuilder.andWhere('rle.initialHour >= :startTime', { startTime });
-    }
-
-    if (endTime) {
+    if (endTime)
       queryBuilder.andWhere('rle.finalHour <= :endTime', { endTime });
-    }
   }
 
   async findEquipmentMapData(
