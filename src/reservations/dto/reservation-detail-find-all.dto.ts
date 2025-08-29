@@ -1,3 +1,5 @@
+import { StatusReservation } from '../enums/status-reservation.enum';
+
 export class ReservationDetailFindAllResponseDto {
   reservationLaboratoryEquipmentId: string;
   laboratoryEquipment: LaboratoryEquipmentFindAllResponseDto;
@@ -7,6 +9,7 @@ export class ReservationDetailFindAllResponseDto {
   finalHour: string;
   duration: number;
   metadata: Record<string, any>;
+  status: StatusReservation;
 }
 
 export class LaboratoryEquipmentFindAllResponseDto {

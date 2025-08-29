@@ -19,6 +19,12 @@ import {
   FindSubscribersWithNaturalPersonsResponseDto,
 } from 'src/grpc/dto/find-subscribers-with-natural-persons.dto';
 import { filterSubscribersByTerm } from '../helpers/filter-subscribers-by-term.helper';
+import {
+  FindAvailableLaboratoriesEquipmentsForUserDto,
+  FindAvailableLaboratoriesEquipmentsForUserResponseDto,
+} from 'src/common/dto/find-available-laboratories-equipments-for-user.dto';
+import { formatFindAvailableLaboratoriesForUserResponse } from '../helpers/format-find-available-laboratories-for-user-response.helper';
+import { ReservationLaboratoryEquipmentService } from './reservation-laboratory-equipment.service';
 
 @Injectable()
 export class ReservationsAdminService {
@@ -27,6 +33,7 @@ export class ReservationsAdminService {
     private readonly reservationRepository: Repository<Reservation>,
     private readonly adminLaboratoriesService: AdminLaboratoriesService,
     private readonly subscribersClient: SubscribersClient,
+    private readonly reservationLaboratoryEquipmentService: ReservationLaboratoryEquipmentService,
   ) {}
 
   async findAdminReservations(
@@ -229,6 +236,30 @@ export class ReservationsAdminService {
       data: filteredData,
       total: filteredData.length,
       totalPages: Math.ceil(filteredData.length / (restDto.limit || 10)),
+    };
+  }
+
+  async findAvailableLaboratoriesEquipmentsForUserWithReservations(
+    findAvailableLaboratoriesEquipmentsForUserDto: FindAvailableLaboratoriesEquipmentsForUserDto,
+  ): Promise<Paginated<FindAvailableLaboratoriesEquipmentsForUserResponseDto>> {
+    const allLaboratories =
+      await this.adminLaboratoriesService.findAvailableLaboratoriesEquipmentsForUser(
+        findAvailableLaboratoriesEquipmentsForUserDto,
+      );
+    const laboratoryEquipmentIdsWithReservations =
+      await this.reservationLaboratoryEquipmentService.getLaboratoryEquipmentIdsWithReservations();
+    const filteredLaboratories = formatFindAvailableLaboratoriesForUserResponse(
+      allLaboratories.data,
+      laboratoryEquipmentIdsWithReservations,
+    );
+    return {
+      data: filteredLaboratories,
+      total: filteredLaboratories.length,
+      page: allLaboratories.page,
+      limit: allLaboratories.limit,
+      totalPages: Math.ceil(
+        filteredLaboratories.length / allLaboratories.limit,
+      ),
     };
   }
 }

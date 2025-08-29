@@ -10,6 +10,7 @@ import { FindAllReservationsDto } from './dto/find-all-reservations.dto';
 import { ReservationsAdminService } from './services/reservations-admin.service';
 import { FindAdminReservationsDto } from './dto/find-admin-reservations.dto';
 import { FindSubscribersListDto } from './dto/find-subscribers-list.dto';
+import { FindAvailableLaboratoriesEquipmentsForUserDto } from 'src/common/dto/find-available-laboratories-equipments-for-user.dto';
 
 @Controller()
 export class ReservationsController {
@@ -77,6 +78,16 @@ export class ReservationsController {
   ) {
     return this.reservationsAdminService.findSubscribersList(
       findSubscribersListDto,
+    );
+  }
+
+  @MessagePattern('reservations.findAvailableLaboratoriesEquipmentsForUser')
+  findAvailableLaboratoriesEquipmentsForUserWithReservations(
+    @Payload()
+    findAvailableLaboratoriesEquipmentsForUserDto: FindAvailableLaboratoriesEquipmentsForUserDto,
+  ) {
+    return this.reservationsAdminService.findAvailableLaboratoriesEquipmentsForUserWithReservations(
+      findAvailableLaboratoriesEquipmentsForUserDto,
     );
   }
 }

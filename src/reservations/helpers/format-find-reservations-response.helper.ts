@@ -70,6 +70,7 @@ export const formatFindReservationsResponse = (
           finalHour: rle.finalHour,
           duration,
           metadata: rle.metadata,
+          status: rle.status,
         };
 
         return reservationDetail;

@@ -280,4 +280,13 @@ export class ReservationLaboratoryEquipmentService {
       message: `Se completaron ${finishedReservations.length} reservas que habían terminado su tiempo programado`,
     };
   }
+
+  async getLaboratoryEquipmentIdsWithReservations(): Promise<string[]> {
+    const reservations = await this.reservationLaboratoryEquipmentRepository
+      .createQueryBuilder('rle')
+      .select('DISTINCT(rle.laboratoryEquipmentId)', 'laboratoryEquipmentId')
+      .getRawMany();
+
+    return reservations.map((r) => r.laboratoryEquipmentId as string);
+  }
 }
