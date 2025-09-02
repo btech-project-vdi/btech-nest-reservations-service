@@ -24,6 +24,10 @@ export class FindAdminReservationsDto extends PaginationDto {
   subscriberId?: string;
 
   @IsOptional()
+  @IsUUID('all', { message: 'reservationId debe ser un UUID válido' })
+  reservationId?: string;
+
+  @IsOptional()
   @IsEnum(TimePeriod, {
     message: 'timePeriod debe ser un valor válido del enum TimePeriod',
   })

@@ -43,6 +43,7 @@ export class ReservationsAdminService {
     const {
       laboratoryEquipmentId,
       subscriberId,
+      reservationId,
       timePeriod,
       startDate,
       endDate,
@@ -83,6 +84,10 @@ export class ReservationsAdminService {
     if (subscriberId)
       queryBuilder.andWhere('reservation.subscriberId = :subscriberId', {
         subscriberId,
+      });
+    if (reservationId)
+      queryBuilder.andWhere('reservation.reservationId = :reservationId', {
+        reservationId,
       });
     this.applyTimePeriodFilter(queryBuilder, timePeriod, startDate, endDate);
     if (startTime || endTime)
