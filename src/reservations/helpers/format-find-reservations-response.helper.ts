@@ -22,8 +22,8 @@ export const formatFindReservationsResponse = (
         // Ordenar por fecha y luego por hora inicial
         const dateA = new Date(a.reservationDate).getTime();
         const dateB = new Date(b.reservationDate).getTime();
-        if (dateA !== dateB) return dateA - dateB;
-        return a.initialHour.localeCompare(b.initialHour);
+        if (dateA !== dateB) return dateB - dateA;
+        return b.initialHour.localeCompare(a.initialHour);
       },
     );
 

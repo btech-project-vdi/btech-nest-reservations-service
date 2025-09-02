@@ -71,8 +71,7 @@ export class ReservationsAdminService {
         'rle.metadata',
         'rle.status',
       ])
-      .orderBy('reservation.createdAt', 'DESC')
-      .addOrderBy('rle.reservationDate', 'DESC');
+      .orderBy('reservation.createdAt', 'DESC');
 
     if (laboratoryEquipmentId)
       queryBuilder.andWhere(
