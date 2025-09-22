@@ -23,6 +23,7 @@ export class Reservation extends Timestamped {
   @OneToMany(
     () => ReservationLaboratoryEquipment,
     (reservationLaboratoryEquipe) => reservationLaboratoryEquipe.reservation,
+    { cascade: true },
   )
   reservationLaboratoryEquipment: ReservationLaboratoryEquipment[];
 

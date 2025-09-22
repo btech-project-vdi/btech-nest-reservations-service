@@ -23,43 +23,41 @@ export class ServiceExceptionFilter implements ExceptionFilter {
     let message: string[] = ['Error interno del microservicio'];
     let errorType = 'UNKNOWN';
 
-    if (exception?.details && typeof exception.details === 'string') {
-      try {
-        const parsedDetails = JSON.parse(exception.details);
-        if (this.isRpcError(parsedDetails)) {
-          return throwError(
-            () =>
-              new RpcException({
-                ...parsedDetails,
-                service: this.serviceName,
-              }),
-          );
-        }
-      } catch (e) {
-        // Si falla el parseo, continuamos con el manejo normal
-        console.warn('Failed to parse gRPC error details', exception.details);
-      }
-    }
+    // 1. Si viene JSON string desde VDI (gRPC o NATS) - pasar como string al gateway
+    const jsonMatch = exception.message?.match(/\{.*\}/);
+    if (jsonMatch) return throwError(() => new RpcException(jsonMatch[0]));
+
     // Si ya es una RpcException, verificamos si tiene la información del servicio
     if (exception instanceof RpcException) {
       const rpcError = exception.getError() as RpcError;
 
       if (this.isRpcError(rpcError)) {
+        console.log('rpcError', rpcError);
         // Si ya tiene toda la información necesaria, solo agregamos el servicio si falta
         if (!rpcError.service) {
           const enhancedError = {
             ...rpcError,
             service: this.serviceName,
           };
-          return throwError(() => new RpcException(enhancedError));
+          return throwError(
+            () => new RpcException(JSON.stringify(enhancedError)),
+          );
         }
         // Si ya tiene toda la información, la pasamos tal como está
-        return throwError(() => exception);
+        return throwError(() => new RpcException(JSON.stringify(rpcError)));
       }
     }
 
+    // Manejo de errores de QueryFailedError de TypeORM
+    if (this.isQueryFailedError(exception)) {
+      errorType = 'QUERY_ERROR';
+      const queryErrorResponse = this.handleQueryFailedError(exception);
+      console.log('queryErrorResponse', queryErrorResponse);
+      status = queryErrorResponse.status;
+      message = queryErrorResponse.message;
+    }
     // Manejo de errores de base de datos
-    if (this.isDatabaseError(exception)) {
+    else if (this.isDatabaseError(exception)) {
       errorType = 'DATABASE_ERROR';
       const dbErrorResponse = this.handleDatabaseError(exception);
       status = dbErrorResponse.status;
@@ -70,13 +68,6 @@ export class ServiceExceptionFilter implements ExceptionFilter {
       errorType = 'VALIDATION_ERROR';
       status = HttpStatus.BAD_REQUEST;
       message = this.extractValidationMessages(exception);
-    }
-    // Manejo de errores de QueryFailedError de TypeORM
-    else if (this.isQueryFailedError(exception)) {
-      errorType = 'QUERY_ERROR';
-      const queryErrorResponse = this.handleQueryFailedError(exception);
-      status = queryErrorResponse.status;
-      message = queryErrorResponse.message;
     }
     // Si es una RpcException existente pero sin estructura correcta
     else if (exception instanceof RpcException) {
@@ -91,14 +82,16 @@ export class ServiceExceptionFilter implements ExceptionFilter {
       status = exception?.status || HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
-    // Crear la RpcException estructurada
-    const rpcError: RpcError = {
-      status,
-      message,
-      service: this.serviceName,
-    };
-
-    return throwError(() => new RpcException(rpcError));
+    return throwError(
+      () =>
+        new RpcException(
+          JSON.stringify({
+            status,
+            message,
+            service: this.serviceName,
+          }),
+        ),
+    );
   }
 
   private isRpcError(error: any): error is RpcError {
@@ -192,7 +185,10 @@ export class ServiceExceptionFilter implements ExceptionFilter {
       message = ['El registro referenciado no existe'];
     }
 
-    return { status, message };
+    return {
+      status,
+      message,
+    };
   }
 
   private handleQueryFailedError(error: any): {

@@ -19,6 +19,7 @@ export class ReservationLaboratoryEquipment extends Timestamped {
   @ManyToOne(
     () => Reservation,
     (reservation) => reservation.reservationLaboratoryEquipment,
+    { onDelete: 'CASCADE' },
   )
   @JoinColumn({ name: 'reservationId' })
   reservation: Reservation;
