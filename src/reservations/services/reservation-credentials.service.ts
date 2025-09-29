@@ -150,7 +150,7 @@ export class ReservationCredentialsService {
     // Siempre usar las credenciales nocturnas como se especificó
     const nightCredentials = equipmentCredentials.night as string;
     return {
-      accessUrl: 'https://vdi.btech.edu.pe', // URL base del VDI
+      accessUrl: 'https://ucv.ia4cloud.com', // URL base del VDI
       username: equipmentName,
       password: nightCredentials,
     };

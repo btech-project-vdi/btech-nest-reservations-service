@@ -23,6 +23,7 @@ message ReservationDetail {
   string startTime = 3;
   string endTime = 4;
   string date = 5;
+  ReservationMetadata metadata = 6;
 }
 
 message SendLabReservationReminderEmailRequest {
@@ -37,6 +38,12 @@ message SendLabReservationReminderEmailRequest {
   string labDescription = 9;
   string equipmentDescription = 10;
   string primaryColor = 11;
+}
+
+message ReservationMetadata {
+  string username = 1;
+  string password = 2;
+  string accessUrl = 3;
 }
 
 message SendEmailResponse {

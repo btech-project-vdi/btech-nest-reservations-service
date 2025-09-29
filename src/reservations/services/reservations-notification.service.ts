@@ -41,6 +41,7 @@ export class ReservationsNotificationService {
           date: formatDateToSpanish(rle.reservationDate),
           startTime: rle.initialHour,
           endTime: rle.finalHour,
+          metadata: rle.metadata,
         };
       });
 
