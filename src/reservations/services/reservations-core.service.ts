@@ -15,7 +15,6 @@ import { Paginated } from 'src/common/dto/paginated.dto';
 import { FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto } from 'src/common/dto/find-one-laboratory-equipment-by-laboratory-equipment-id';
 
 // Services
-import { ReservationLaboratoryEquipmentService } from './reservation-laboratory-equipment.service';
 import { ReservationsValidationService } from './reservations-validation.service';
 import { ReservationsAvailabilityService } from './reservations-availability.service';
 import { ReservationsNotificationService } from './reservations-notification.service';
@@ -26,6 +25,7 @@ import { TransactionService } from 'src/common/services/transaction.service';
 import { formatReservationResponse } from '../helpers/format-reservation-response.helper';
 import { formatFindReservationsResponse } from '../helpers/format-find-reservations-response.helper';
 import { paginate } from 'src/common/helpers/paginate.helper';
+import { ReservationLaboratoryEquipmentService } from './reservation-laboratory-equipment.service';
 
 @Injectable()
 export class ReservationsCoreService {
@@ -79,6 +79,7 @@ export class ReservationsCoreService {
             reservationDetails.map((detail) =>
               this.reservationLaboratoryEquipmentService.create(
                 detail,
+                informationSubscriber,
                 queryRunner,
               ),
             ),

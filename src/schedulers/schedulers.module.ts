@@ -16,6 +16,10 @@ import { JobLoggerHelper } from './helpers/job-logger.helper';
     SendReservationRemindersJob,
     JobLoggerHelper,
   ],
-  exports: [SchedulersService, CompleteFinishedReservationsJob, SendReservationRemindersJob],
+  exports: [
+    SchedulersService,
+    CompleteFinishedReservationsJob,
+    SendReservationRemindersJob,
+  ],
 })
 export class SchedulersModule {}

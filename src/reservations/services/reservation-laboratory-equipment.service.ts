@@ -20,6 +20,9 @@ import { paginate } from 'src/common/helpers/paginate.helper';
 import { Paginated } from 'src/common/dto/paginated.dto';
 import { CompleteFinishedReservationsResponseDto } from '../dto/complete-finished-reservations.dto';
 import { ReservationsCoreService } from './reservations-core.service';
+import { ReservationCredentialsService } from './reservation-credentials.service';
+import { InformationSubscriberDto } from '../dto/information-subscriber.dto';
+import { AdminLaboratoriesService } from '../../common/services/admin-laboratories.service';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentService {
@@ -28,9 +31,12 @@ export class ReservationLaboratoryEquipmentService {
     private readonly reservationLaboratoryEquipmentRepository: Repository<ReservationLaboratoryEquipment>,
     @Inject(forwardRef(() => ReservationsCoreService))
     private readonly reservationCoreService: ReservationsCoreService,
+    private readonly reservationCredentialsService: ReservationCredentialsService,
+    private readonly adminLaboratoriesService: AdminLaboratoriesService,
   ) {}
   async create(
     createReservationDetailDto: CreateReservationDetailDto,
+    informationSubscriber: InformationSubscriberDto,
     queryRunner?: QueryRunner,
   ): Promise<ReservationLaboratoryEquipment> {
     const [year, month, day] = createReservationDetailDto.initialDate
@@ -38,13 +44,52 @@ export class ReservationLaboratoryEquipmentService {
       .map(Number);
     const [finalYear, finalMonth, finalDay] =
       createReservationDetailDto.finalDate.split('-').map(Number);
+    const reservationDate = new Date(year, month - 1, day);
+
+    // Generar credenciales automáticamente basándose en conflictos
+    const credentials =
+      await this.reservationCredentialsService.assignUserCredentials(
+        createReservationDetailDto.laboratoryEquipmentId,
+        reservationDate,
+        createReservationDetailDto.initialHour,
+        createReservationDetailDto.finalHour,
+      );
+
+    // Obtener información del laboratorio y equipo para la metadata de notificación
+    const equipment =
+      await this.adminLaboratoriesService.findOneByLaboratoryEquipmentId(
+        createReservationDetailDto.laboratoryEquipmentId,
+      );
+
+    // Crear metadata completa con credenciales e información de notificación
+    const completeMetadata = {
+      // Credenciales de acceso
+      ...credentials,
+      // Información para notificaciones por correo
+      emailNotificationData: {
+        // Información del suscriptor
+        subscriberEmail: informationSubscriber.email,
+        subscriberName: informationSubscriber.subscriberName,
+        companyName: informationSubscriber.companyName,
+        logoUrl: informationSubscriber.logoUrl,
+        primaryColor: informationSubscriber.primaryColor,
+        // Información del laboratorio y equipo
+        laboratoryName: equipment?.description || 'Laboratorio',
+        // Información de la reserva
+        reservationDate: reservationDate.toLocaleDateString('es-PE'),
+        initialHour: createReservationDetailDto.initialHour,
+        finalHour: createReservationDetailDto.finalHour,
+      },
+    };
+
     const repository = queryRunner
       ? queryRunner.manager.getRepository(ReservationLaboratoryEquipment)
       : this.reservationLaboratoryEquipmentRepository;
+
     const reservationDetail = repository.create({
-      metadata: {},
+      metadata: completeMetadata,
       laboratoryEquipmentId: createReservationDetailDto.laboratoryEquipmentId,
-      reservationDate: new Date(year, month - 1, day),
+      reservationDate: reservationDate,
       initialHour: createReservationDetailDto.initialHour,
       reservationFinalDate: new Date(finalYear, finalMonth - 1, finalDay),
       finalHour: createReservationDetailDto.finalHour,
