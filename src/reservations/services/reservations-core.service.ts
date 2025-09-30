@@ -101,6 +101,7 @@ export class ReservationsCoreService {
           reservationFormatted,
           informationSubscriber,
           equipmentMap,
+          user.subscription.subscriptionDetailId,
         );
         return reservationFormatted;
       },

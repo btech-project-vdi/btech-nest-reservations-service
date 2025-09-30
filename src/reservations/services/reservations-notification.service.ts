@@ -28,6 +28,7 @@ export class ReservationsNotificationService {
       string,
       FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto
     >,
+    subscriptionDetailId: string,
   ): Promise<void> {
     try {
       const { reservationLaboratoryEquipment } = reservation;
@@ -53,6 +54,7 @@ export class ReservationsNotificationService {
         reservationDate: formatDateToSpanish(reservation.createdAt),
         details,
         primaryColor: informationSubscriber.primaryColor,
+        subscriptionDetailId,
       });
     } catch (error) {
       this.logger.error(

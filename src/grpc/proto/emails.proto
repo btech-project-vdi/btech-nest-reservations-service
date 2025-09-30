@@ -15,6 +15,7 @@ message SendLabReservationEmailRequest {
   string reservationDate = 5;
   repeated ReservationDetail details = 6;
   string primaryColor = 7;
+  string subscriptionDetailId = 8;
 }
 
 message ReservationDetail {

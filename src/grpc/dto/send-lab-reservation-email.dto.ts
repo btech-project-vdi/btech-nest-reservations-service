@@ -6,6 +6,7 @@ export class SendLabReservationEmailDto {
   reservationDate: string;
   details: SendLabReservationEmailDetailsDto[];
   primaryColor: string;
+  subscriptionDetailId: string;
 }
 
 export class SendLabReservationEmailDetailsDto {
