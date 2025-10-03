@@ -180,20 +180,14 @@ export class ReservationsAdminService {
   ): Promise<FindSubscribersWithNaturalPersonsResponseDto> {
     const { term, page, limit, ...restDto } = findSubscribersListDto;
 
-    const baseQuery = this.reservationRepository
+    const reservations = await this.reservationRepository
       .createQueryBuilder('reservation')
       .select('reservation.subscriberId', 'subscriberId')
       .groupBy('reservation.subscriberId')
-      .orderBy('MAX(reservation.createdAt)', 'DESC');
-
-    const [reservations, total] = await Promise.all([
-      baseQuery
-        .clone()
-        .limit(limit || 10)
-        .offset(((page || 1) - 1) * (limit || 10))
-        .getRawMany<{ subscriberId: string }>(),
-      baseQuery.clone().getCount(),
-    ]);
+      .orderBy('MAX(reservation.createdAt)', 'DESC')
+      .limit(limit || 10)
+      .offset(((page || 1) - 1) * (limit || 10))
+      .getRawMany<{ subscriberId: string }>();
 
     const subscriberIds = reservations.map((r) => r.subscriberId);
 
@@ -219,10 +213,8 @@ export class ReservationsAdminService {
 
     return {
       ...response,
-      total,
       page: page || 1,
       limit: limit || 10,
-      totalPages: Math.ceil(total / (limit || 10)),
     };
   }
 
