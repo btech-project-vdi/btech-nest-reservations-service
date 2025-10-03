@@ -10,6 +10,8 @@ message FindSubscribersWithNaturalPersonsRequest {
   string subscriptionDetailId = 1;
   optional int32 page = 2;
   optional int32 limit = 3;
+  optional string term = 4;
+  repeated string subscriberIds = 5;
 }
 
 message PersonInformation {

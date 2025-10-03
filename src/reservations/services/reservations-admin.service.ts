@@ -18,7 +18,6 @@ import {
   FindSubscribersWithNaturalPersonsDto,
   FindSubscribersWithNaturalPersonsResponseDto,
 } from 'src/grpc/dto/find-subscribers-with-natural-persons.dto';
-import { filterSubscribersByTerm } from '../helpers/filter-subscribers-by-term.helper';
 import {
   FindAvailableLaboratoriesEquipmentsForUserDto,
   FindAvailableLaboratoriesEquipmentsForUserResponseDto,
@@ -179,21 +178,51 @@ export class ReservationsAdminService {
   async findSubscribersList(
     findSubscribersListDto: FindSubscribersListDto,
   ): Promise<FindSubscribersWithNaturalPersonsResponseDto> {
-    const { term, ...restDto } = findSubscribersListDto;
+    const { term, page, limit, ...restDto } = findSubscribersListDto;
+
+    const baseQuery = this.reservationRepository
+      .createQueryBuilder('reservation')
+      .select('reservation.subscriberId', 'subscriberId')
+      .groupBy('reservation.subscriberId')
+      .orderBy('MAX(reservation.createdAt)', 'DESC');
+
+    const [reservations, total] = await Promise.all([
+      baseQuery
+        .clone()
+        .limit(limit || 10)
+        .offset(((page || 1) - 1) * (limit || 10))
+        .getRawMany<{ subscriberId: string }>(),
+      baseQuery.clone().getCount(),
+    ]);
+
+    const subscriberIds = reservations.map((r) => r.subscriberId);
+
+    if (subscriberIds.length === 0)
+      return {
+        data: [],
+        total: 0,
+        page: page || 1,
+        limit: limit || 10,
+        totalPages: 0,
+      };
+
     const grpcDto: FindSubscribersWithNaturalPersonsDto = {
       subscriptionDetailId: restDto.subscriptionDetailId,
-      page: restDto.page || 1,
-      limit: restDto.limit || 10,
+      page: 1,
+      limit: subscriberIds.length,
+      term: term?.trim() || undefined,
+      subscriberIds,
     };
+
     const response =
       await this.subscribersClient.findSubscribersWithNaturalPersons(grpcDto);
-    if (!term || term.trim() === '') return response;
-    const filteredData = filterSubscribersByTerm(response.data, term);
+
     return {
       ...response,
-      data: filteredData,
-      total: filteredData.length,
-      totalPages: Math.ceil(filteredData.length / (restDto.limit || 10)),
+      total,
+      page: page || 1,
+      limit: limit || 10,
+      totalPages: Math.ceil(total / (limit || 10)),
     };
   }
 
