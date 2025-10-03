@@ -176,37 +176,46 @@ export class ReservationsAdminService {
   async findSubscribersList(
     findSubscribersListDto: FindSubscribersListDto,
   ): Promise<FindSubscribersWithNaturalPersonsResponseDto> {
-    const { term, ...paginationDto } = findSubscribersListDto;
+    const { term, page = 1, limit = 10 } = findSubscribersListDto;
 
-    const queryBuilder = this.reservationRepository
-      .createQueryBuilder('reservation')
-      .select([
-        'reservation.subscriberId',
-        'reservation.username',
-        'reservation.metadata',
-      ])
-      .groupBy('reservation.subscriberId')
-      .addGroupBy('reservation.username')
-      .addGroupBy('reservation.metadata')
-      .orderBy('MAX(reservation.createdAt)', 'DESC');
+    const subQuery = this.reservationRepository
+      .createQueryBuilder('r')
+      .select('r.subscriberId', 'subscriberId')
+      .addSelect('MAX(r.createdAt)', 'maxCreatedAt')
+      .groupBy('r.subscriberId');
 
     if (term?.trim()) {
       const searchTerm = `%${term.trim()}%`;
-      queryBuilder.andWhere(
-        `(reservation.username LIKE :searchTerm OR
-        JSON_EXTRACT(reservation.metadata, '$.naturalPerson.fullName') LIKE :searchTerm OR
-        JSON_EXTRACT(reservation.metadata, '$.naturalPerson.paternalSurname') LIKE :searchTerm OR
-        JSON_EXTRACT(reservation.metadata, '$.naturalPerson.maternalSurname') LIKE :searchTerm OR
-        JSON_EXTRACT(reservation.metadata, '$.naturalPerson.documentNumber') LIKE :searchTerm OR
-        JSON_EXTRACT(reservation.metadata, '$.naturalPerson.email') LIKE :searchTerm)`,
+      subQuery.andWhere(
+        `(r.username LIKE :searchTerm OR
+        JSON_EXTRACT(r.metadata, '$.naturalPerson.fullName') LIKE :searchTerm OR
+        JSON_EXTRACT(r.metadata, '$.naturalPerson.paternalSurname') LIKE :searchTerm OR
+        JSON_EXTRACT(r.metadata, '$.naturalPerson.maternalSurname') LIKE :searchTerm OR
+        JSON_EXTRACT(r.metadata, '$.naturalPerson.documentNumber') LIKE :searchTerm OR
+        JSON_EXTRACT(r.metadata, '$.naturalPerson.email') LIKE :searchTerm)`,
         { searchTerm },
       );
     }
-    const paginatedReservations = await paginateQueryBuilder(
-      queryBuilder,
-      paginationDto,
-    );
+
+    const subscriberIdsSubQuery = `(${subQuery.getQuery()})`;
+
+    const queryBuilder = this.reservationRepository
+      .createQueryBuilder('reservation')
+      .innerJoin(
+        subscriberIdsSubQuery,
+        'sub',
+        'reservation.subscriberId = sub.subscriberId AND reservation.createdAt = sub.maxCreatedAt',
+      )
+      .setParameters(subQuery.getParameters())
+      .orderBy('reservation.createdAt', 'DESC');
+
+    const paginatedReservations = await paginateQueryBuilder(queryBuilder, {
+      page,
+      limit,
+    });
+
     const data = formatSubscribersListResponse(paginatedReservations.data);
+
     return {
       data,
       total: paginatedReservations.total,

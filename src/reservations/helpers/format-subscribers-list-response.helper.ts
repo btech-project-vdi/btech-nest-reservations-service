@@ -8,23 +8,25 @@ export const formatSubscribersListResponse = (
   reservations: Reservation[],
 ): SubscriberWithNaturalPersonDataDto[] => {
   return reservations.map((r) => {
-    // const metadata = JSON.parse(r.metadata || '{}');
-    const naturalPerson = r.metadata
-      .naturalPerson as NaturalPersonCompleteInfoDto;
+    const naturalPerson = r.metadata?.naturalPerson as
+      | NaturalPersonCompleteInfoDto
+      | undefined;
 
     return {
       subscriberId: r.subscriberId,
       username: r.username,
-      naturalPerson: {
-        naturalPersonId: naturalPerson.naturalPersonId || '',
-        personId: '',
-        fullName: naturalPerson.fullName || '',
-        paternalSurname: naturalPerson.paternalSurname || '',
-        maternalSurname: naturalPerson.maternalSurname || '',
-        documentNumber: naturalPerson.documentNumber || '',
-        documentType: naturalPerson.documentType || '',
-        personInformation: naturalPerson.personInformation || [],
-      },
+      naturalPerson: naturalPerson
+        ? {
+            naturalPersonId: naturalPerson.naturalPersonId || '',
+            personId: '',
+            fullName: naturalPerson.fullName || '',
+            paternalSurname: naturalPerson.paternalSurname || '',
+            maternalSurname: naturalPerson.maternalSurname || '',
+            documentNumber: naturalPerson.documentNumber || '',
+            documentType: naturalPerson.documentType || '',
+            personInformation: naturalPerson.personInformation || [],
+          }
+        : null,
     };
   });
 };

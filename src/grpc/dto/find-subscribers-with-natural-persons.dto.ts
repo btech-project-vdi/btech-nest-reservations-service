@@ -55,7 +55,7 @@ export class NaturalPersonCompleteInfoDto {
 export class SubscriberWithNaturalPersonDataDto {
   subscriberId: string;
   username: string;
-  naturalPerson: NaturalPersonCompleteInfoDto;
+  naturalPerson: NaturalPersonCompleteInfoDto | null;
 }
 
 export class FindSubscribersWithNaturalPersonsResponseDto {
