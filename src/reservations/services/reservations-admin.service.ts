@@ -14,10 +14,7 @@ import { AdminLaboratoriesService } from 'src/common/services/admin-laboratories
 import { FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto } from 'src/common/dto/find-one-laboratory-equipment-by-laboratory-equipment-id';
 import { FindSubscribersListDto } from '../dto/find-subscribers-list.dto';
 import { SubscribersClient } from 'src/grpc/clients/subscribers.client';
-import {
-  FindSubscribersWithNaturalPersonsDto,
-  FindSubscribersWithNaturalPersonsResponseDto,
-} from 'src/grpc/dto/find-subscribers-with-natural-persons.dto';
+import { FindSubscribersWithNaturalPersonsResponseDto } from 'src/grpc/dto/find-subscribers-with-natural-persons.dto';
 import {
   FindAvailableLaboratoriesEquipmentsForUserDto,
   FindAvailableLaboratoriesEquipmentsForUserResponseDto,
@@ -25,6 +22,7 @@ import {
 import { formatFindAvailableLaboratoriesForUserResponse } from '../helpers/format-find-available-laboratories-for-user-response.helper';
 import { ReservationLaboratoryEquipmentService } from './reservation-laboratory-equipment.service';
 import { calculateTimePeriodDates } from '../helpers/calculate-time-period-dates.helper';
+import { formatSubscribersListResponse } from '../helpers/format-subscribers-list-response.helper';
 
 @Injectable()
 export class ReservationsAdminService {
@@ -178,43 +176,43 @@ export class ReservationsAdminService {
   async findSubscribersList(
     findSubscribersListDto: FindSubscribersListDto,
   ): Promise<FindSubscribersWithNaturalPersonsResponseDto> {
-    const { term, page, limit, ...restDto } = findSubscribersListDto;
+    const { term, ...paginationDto } = findSubscribersListDto;
 
-    const reservations = await this.reservationRepository
+    const queryBuilder = this.reservationRepository
       .createQueryBuilder('reservation')
-      .select('reservation.subscriberId', 'subscriberId')
+      .select([
+        'reservation.subscriberId',
+        'reservation.username',
+        'reservation.metadata',
+      ])
       .groupBy('reservation.subscriberId')
-      .orderBy('MAX(reservation.createdAt)', 'DESC')
-      .limit(limit || 10)
-      .offset(((page || 1) - 1) * (limit || 10))
-      .getRawMany<{ subscriberId: string }>();
+      .addGroupBy('reservation.username')
+      .addGroupBy('reservation.metadata')
+      .orderBy('MAX(reservation.createdAt)', 'DESC');
 
-    const subscriberIds = reservations.map((r) => r.subscriberId);
-
-    if (subscriberIds.length === 0)
-      return {
-        data: [],
-        total: 0,
-        page: page || 1,
-        limit: limit || 10,
-        totalPages: 0,
-      };
-
-    const grpcDto: FindSubscribersWithNaturalPersonsDto = {
-      subscriptionDetailId: restDto.subscriptionDetailId,
-      page: 1,
-      limit: subscriberIds.length,
-      term: term?.trim() || undefined,
-      subscriberIds,
-    };
-
-    const response =
-      await this.subscribersClient.findSubscribersWithNaturalPersons(grpcDto);
-
+    if (term?.trim()) {
+      const searchTerm = `%${term.trim()}%`;
+      queryBuilder.andWhere(
+        `(reservation.username LIKE :searchTerm OR
+        JSON_EXTRACT(reservation.metadata, '$.naturalPerson.fullName') LIKE :searchTerm OR
+        JSON_EXTRACT(reservation.metadata, '$.naturalPerson.paternalSurname') LIKE :searchTerm OR
+        JSON_EXTRACT(reservation.metadata, '$.naturalPerson.maternalSurname') LIKE :searchTerm OR
+        JSON_EXTRACT(reservation.metadata, '$.naturalPerson.documentNumber') LIKE :searchTerm OR
+        JSON_EXTRACT(reservation.metadata, '$.naturalPerson.email') LIKE :searchTerm)`,
+        { searchTerm },
+      );
+    }
+    const paginatedReservations = await paginateQueryBuilder(
+      queryBuilder,
+      paginationDto,
+    );
+    const data = formatSubscribersListResponse(paginatedReservations.data);
     return {
-      ...response,
-      page: page || 1,
-      limit: limit || 10,
+      data,
+      total: paginatedReservations.total,
+      page: paginatedReservations.page,
+      limit: paginatedReservations.limit,
+      totalPages: paginatedReservations.totalPages,
     };
   }
 
