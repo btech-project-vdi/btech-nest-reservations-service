@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { StatusReservation } from '../enums/status-reservation.enum';
 
 export class UpdateReservationStatusDto {
@@ -20,9 +20,9 @@ export class UpdateReservationStatusDto {
   })
   status: StatusReservation;
 
-  @IsNotEmpty({ message: 'El campo subscriptionDetailId es obligatorio' })
+  @IsOptional()
   @IsUUID('all', {
     message: 'El campo subscriptionDetailId debe ser un UUID válido',
   })
-  subscriptionDetailId: string;
+  subscriptionDetailId?: string;
 }

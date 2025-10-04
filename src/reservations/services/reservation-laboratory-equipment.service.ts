@@ -133,7 +133,7 @@ export class ReservationLaboratoryEquipmentService {
         reservationLaboratoryEquipmentId,
         metadata:
           reservationLaboratoryEquipment.metadata as EmailNotificationMetadataDto,
-        subscriptionDetailId,
+        subscriptionDetailId: subscriptionDetailId ?? '',
       });
     }
 
