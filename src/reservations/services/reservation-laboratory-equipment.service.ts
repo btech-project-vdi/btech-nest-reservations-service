@@ -1,177 +1,55 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable } from '@nestjs/common';
 import { ReservationLaboratoryEquipment } from '../entities/reservation-laboratory-equipment.entity';
-import { Brackets, In, QueryRunner, Repository } from 'typeorm';
-import { StatusReservation } from '../enums/status-reservation.enum';
+import { QueryRunner } from 'typeorm';
 import {
   FindReservationsByEquipmentAndDateRangeDto,
   FindReservationsByEquipmentAndDateRangeResponseDto,
 } from '../dto/find-reservations-by-equipment-and-date-range.dto';
-import { formatFindReservationsRangeResponse } from '../helpers/format-find-reservations-range-response.dto';
 import { CreateReservationDetailDto } from '../dto/create-reservation-detail.dto';
-import { RpcException } from '@nestjs/microservices';
 import { UpdateReservationStatusDto } from '../dto/update-reservation-status.dto';
 import { ResponseBaseMessageDto } from '../dto/response-base-message.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { ConfirmListReservationResponseDto } from 'src/systems/dto/confirm-list-reservation.dto';
-import { formatConfirmListReservationResponse } from '../helpers/format-confirm-list-reservation-response.helper';
-import { paginate } from 'src/common/helpers/paginate.helper';
 import { Paginated } from 'src/common/dto/paginated.dto';
 import { CompleteFinishedReservationsResponseDto } from '../dto/complete-finished-reservations.dto';
-import { ReservationsCoreService } from './reservations-core.service';
-import { ReservationCredentialsService } from './reservation-credentials.service';
 import { InformationSubscriberDto } from '../dto/information-subscriber.dto';
-import { AdminLaboratoriesService } from '../../common/services/admin-laboratories.service';
-import { EmailsClient } from 'src/grpc/clients/emails.client';
-import { EmailNotificationMetadataDto } from 'src/grpc/dto/send-lab-equipment-reservation-cancellation-email.dto';
+import { StatusReservation } from '../enums/status-reservation.enum';
+import { ReservationLaboratoryEquipmentCoreService } from './reservation-laboratory-equipment-core.service';
+import { ReservationLaboratoryEquipmentValidateService } from './reservation-laboratory-equipment-validate.service';
+import { ReservationLaboratoryEquipmentCustomService } from './reservation-laboratory-equipment-custom.service';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentService {
   constructor(
-    @InjectRepository(ReservationLaboratoryEquipment)
-    private readonly reservationLaboratoryEquipmentRepository: Repository<ReservationLaboratoryEquipment>,
-    @Inject(forwardRef(() => ReservationsCoreService))
-    private readonly reservationCoreService: ReservationsCoreService,
-    private readonly reservationCredentialsService: ReservationCredentialsService,
-    private readonly adminLaboratoriesService: AdminLaboratoriesService,
-    private readonly emailsClient: EmailsClient,
+    private readonly coreService: ReservationLaboratoryEquipmentCoreService,
+    private readonly validateService: ReservationLaboratoryEquipmentValidateService,
+    private readonly customService: ReservationLaboratoryEquipmentCustomService,
   ) {}
+
   async create(
     createReservationDetailDto: CreateReservationDetailDto,
     informationSubscriber: InformationSubscriberDto,
     queryRunner?: QueryRunner,
   ): Promise<ReservationLaboratoryEquipment> {
-    const [year, month, day] = createReservationDetailDto.initialDate
-      .split('-')
-      .map(Number);
-    const [finalYear, finalMonth, finalDay] =
-      createReservationDetailDto.finalDate.split('-').map(Number);
-    const reservationDate = new Date(year, month - 1, day);
-
-    // Generar credenciales automáticamente basándose en conflictos
-    const credentials =
-      await this.reservationCredentialsService.assignUserCredentials(
-        createReservationDetailDto.laboratoryEquipmentId,
-        reservationDate,
-        createReservationDetailDto.initialHour,
-        createReservationDetailDto.finalHour,
-      );
-
-    // Obtener información del laboratorio y equipo para la metadata de notificación
-    const equipment =
-      await this.adminLaboratoriesService.findOneByLaboratoryEquipmentId(
-        createReservationDetailDto.laboratoryEquipmentId,
-      );
-
-    // Crear metadata completa con credenciales e información de notificación
-    const completeMetadata = {
-      // Credenciales de acceso
-      ...credentials,
-      // Información para notificaciones por correo
-      emailNotificationData: {
-        // Información del suscriptor
-        subscriberEmail: informationSubscriber.email,
-        subscriberName: informationSubscriber.subscriberName,
-        companyName: informationSubscriber.companyName,
-        logoUrl: informationSubscriber.logoUrl,
-        primaryColor: informationSubscriber.primaryColor,
-        // Información del laboratorio y equipo
-        laboratoryName: equipment?.description || 'Laboratorio',
-        // Información de la reserva
-        reservationDate: reservationDate.toLocaleDateString('es-PE'),
-        initialHour: createReservationDetailDto.initialHour,
-        finalHour: createReservationDetailDto.finalHour,
-      },
-    };
-
-    const repository = queryRunner
-      ? queryRunner.manager.getRepository(ReservationLaboratoryEquipment)
-      : this.reservationLaboratoryEquipmentRepository;
-
-    const reservationDetail = repository.create({
-      metadata: completeMetadata,
-      laboratoryEquipmentId: createReservationDetailDto.laboratoryEquipmentId,
-      reservationDate: reservationDate,
-      initialHour: createReservationDetailDto.initialHour,
-      reservationFinalDate: new Date(finalYear, finalMonth - 1, finalDay),
-      finalHour: createReservationDetailDto.finalHour,
-    });
-    return await repository.save(reservationDetail);
+    return this.coreService.create(
+      createReservationDetailDto,
+      informationSubscriber,
+      queryRunner,
+    );
   }
 
   async updateStatus(
     updateReservationStatusDto: UpdateReservationStatusDto,
   ): Promise<ResponseBaseMessageDto> {
-    const { reservationLaboratoryEquipmentId, status, subscriptionDetailId } =
-      updateReservationStatusDto;
-
-    const reservationLaboratoryEquipment =
-      await this.reservationLaboratoryEquipmentRepository.findOne({
-        where: { reservationLaboratoryEquipmentId },
-      });
-
-    if (!reservationLaboratoryEquipment)
-      throw new RpcException({
-        status: HttpStatus.NOT_FOUND,
-        message: `La reserva no se encuentra registrada`,
-      });
-
-    const result = await this.reservationLaboratoryEquipmentRepository.update(
-      { reservationLaboratoryEquipmentId },
-      { status, updatedAt: new Date() },
-    );
-
-    if (result.affected === 0)
-      throw new RpcException({
-        status: HttpStatus.NOT_FOUND,
-        message: `La reserva no se encuentra registrada`,
-      });
-
-    if (status === StatusReservation.CANCELED && subscriptionDetailId) {
-      try {
-        await this.emailsClient.sendLabEquipmentReservationCancellationEmail({
-          reservationLaboratoryEquipmentId,
-          metadata:
-            reservationLaboratoryEquipment.metadata as EmailNotificationMetadataDto,
-          subscriptionDetailId,
-        });
-      } catch (error) {
-        console.error('Error sending cancellation email:', error);
-      }
-    }
-
-    return {
-      message: `El item de reserva con el id ${reservationLaboratoryEquipmentId} fue actualizado con el estado ${status}`,
-    };
+    return this.coreService.updateStatus(updateReservationStatusDto);
   }
 
   async findReservationsByEquipmentAndDateRange(
     findReservationsByEquipmentAndDateRangeDto: FindReservationsByEquipmentAndDateRangeDto,
   ): Promise<FindReservationsByEquipmentAndDateRangeResponseDto[]> {
-    const { laboratoryEquipmentId, initialDate, finalDate } =
-      findReservationsByEquipmentAndDateRangeDto;
-    const initialDateObj = new Date(initialDate);
-    const finalDateObj = new Date(finalDate);
-    const existingReservations =
-      await this.reservationLaboratoryEquipmentRepository
-        .createQueryBuilder('rle')
-        .where('rle.laboratoryEquipmentId = :laboratoryEquipmentId', {
-          laboratoryEquipmentId,
-        })
-        .andWhere(
-          '((rle.reservationDate <= :finalDate AND rle.reservationFinalDate >= :initialDate) OR ' +
-            '(rle.reservationDate <= :finalDate AND rle.reservationFinalDate IS NULL))',
-          {
-            initialDate: initialDateObj.toISOString().split('T')[0],
-            finalDate: finalDateObj.toISOString().split('T')[0],
-          },
-        )
-        .andWhere('rle.status IN (:...statuses)', {
-          statuses: [StatusReservation.PENDING, StatusReservation.CONFIRMED],
-        })
-        .getMany();
-    return existingReservations.map(formatFindReservationsRangeResponse);
+    return this.validateService.findReservationsByEquipmentAndDateRange(
+      findReservationsByEquipmentAndDateRangeDto,
+    );
   }
 
   async findReservationsByUserAndDateRange(
@@ -179,23 +57,11 @@ export class ReservationLaboratoryEquipmentService {
     initialDate: Date,
     finalDate: Date,
   ): Promise<ReservationLaboratoryEquipment[]> {
-    const initialDateISO = initialDate.toISOString().split('T')[0];
-    const finalDateISO = finalDate.toISOString().split('T')[0];
-
-    return await this.reservationLaboratoryEquipmentRepository
-      .createQueryBuilder('rle')
-      .leftJoinAndSelect('rle.reservation', 'r')
-      .where('r.subscriberId = :userId', { userId })
-      .andWhere('rle.reservationDate >= :initialDate', {
-        initialDate: initialDateISO,
-      })
-      .andWhere('rle.reservationDate <= :finalDate', {
-        finalDate: finalDateISO,
-      })
-      .andWhere('rle.status IN (:...statuses)', {
-        statuses: [StatusReservation.PENDING, StatusReservation.CONFIRMED],
-      })
-      .getMany();
+    return this.validateService.findReservationsByUserAndDateRange(
+      userId,
+      initialDate,
+      finalDate,
+    );
   }
 
   async checkAvailabilityBatch(
@@ -204,163 +70,38 @@ export class ReservationLaboratoryEquipmentService {
     initialHour: string,
     finalHour: string,
   ): Promise<Map<string, number>> {
-    if (!labEquipmentIds || labEquipmentIds.length === 0) {
-      return new Map();
-    }
-
-    const newReservationStartDateTime = `${date} ${initialHour}`;
-    let newReservationEndDateTime: string;
-
-    const initialMinutes =
-      parseInt(initialHour.split(':')[0]) * 60 +
-      parseInt(initialHour.split(':')[1]);
-    const finalMinutes =
-      parseInt(finalHour.split(':')[0]) * 60 +
-      parseInt(finalHour.split(':')[1]);
-
-    if (finalMinutes <= initialMinutes) {
-      const nextDay = new Date(date);
-      nextDay.setDate(nextDay.getDate() + 1);
-      const nextDayFormatted = nextDay.toISOString().split('T')[0];
-      newReservationEndDateTime = `${nextDayFormatted} ${finalHour}`;
-    } else {
-      newReservationEndDateTime = `${date} ${finalHour}`;
-    }
-
-    const results = await this.reservationLaboratoryEquipmentRepository
-      .createQueryBuilder('rle')
-      .select('rle.laboratoryEquipmentId', 'laboratoryEquipmentId')
-      .addSelect('COUNT(*)', 'count')
-      .where('rle.laboratoryEquipmentId IN (:...labEquipmentIds)', {
-        labEquipmentIds,
-      })
-      .andWhere('rle.status IN (:...statuses)', {
-        statuses: [StatusReservation.PENDING, StatusReservation.CONFIRMED],
-      })
-      .andWhere(
-        new Brackets((qb) => {
-          // Convertir a DATETIME/TIMESTAMP para una comparación precisa
-          const rleStart = `CAST(CONCAT(rle.reservationDate, ' ', rle.initialHour) AS DATETIME)`;
-
-          const rleEnd = `
-        CAST(CASE
-          WHEN rle.reservationFinalDate IS NOT NULL AND rle.reservationFinalDate > rle.reservationDate
-          THEN CONCAT(rle.reservationFinalDate, ' ', rle.finalHour)
-          ELSE CONCAT(rle.reservationDate, ' ', rle.finalHour)
-        END AS DATETIME)
-      `;
-          qb.where(`:newResStart < ${rleEnd} AND :newResEnd > ${rleStart}`, {
-            newResStart: newReservationStartDateTime,
-            newResEnd: newReservationEndDateTime,
-          });
-        }),
-      )
-      .groupBy('rle.laboratoryEquipmentId')
-      .getRawMany();
-
-    // Convertir resultados a Map para lookup rápido
-    const countMap = new Map<string, number>();
-    // Inicializar todos los equipos con 0
-    labEquipmentIds.forEach((id) => countMap.set(id, 0));
-    // Actualizar con los valores reales
-    results.forEach((result) => {
-      countMap.set(result.laboratoryEquipmentId, parseInt(result.count, 10));
-    });
-
-    return countMap;
+    return this.validateService.checkAvailabilityBatch(
+      labEquipmentIds,
+      date,
+      initialHour,
+      finalHour,
+    );
   }
 
   async confirmListReservation(
     paginationDto: PaginationDto,
     status: StatusReservation | undefined,
   ): Promise<Paginated<ConfirmListReservationResponseDto>> {
-    const whereCondition = status ? { status: status } : {};
-    const reservationLaboratoryEquipment =
-      await this.reservationLaboratoryEquipmentRepository.find({
-        relations: ['reservation'],
-        order: {
-          createdAt: 'ASC',
-        },
-        where: whereCondition,
-      });
-    const laboratoryEquipmentIds = reservationLaboratoryEquipment.map(
-      (rle) => rle.laboratoryEquipmentId,
-    );
-    const equipmentMap = await this.reservationCoreService.findEquipmentMapData(
-      laboratoryEquipmentIds,
-    );
-    const confirmListReservations = formatConfirmListReservationResponse(
-      reservationLaboratoryEquipment,
-      equipmentMap,
-    );
-    return await paginate(confirmListReservations, paginationDto);
+    return this.customService.confirmListReservation(paginationDto, status);
   }
 
   async findReservationsForReminder(): Promise<
     ReservationLaboratoryEquipment[]
   > {
-    return await this.reservationLaboratoryEquipmentRepository
-      .createQueryBuilder('rle')
-      .leftJoinAndSelect('rle.reservation', 'reservation')
-      .where('rle.reminderEmailSent = false')
-      .andWhere('rle.reservationDate >= CURDATE()')
-      .andWhere('rle.status = :status', { status: StatusReservation.PENDING })
-      .getMany();
+    return this.customService.findReservationsForReminder();
   }
 
   async markReminderEmailSent(reservationId: string): Promise<void> {
-    await this.reservationLaboratoryEquipmentRepository.update(reservationId, {
-      reminderEmailSent: true,
-    });
+    return this.coreService.markReminderEmailSent(reservationId);
   }
 
   async completeFinishedReservations(
     currentDateTime: Date,
   ): Promise<CompleteFinishedReservationsResponseDto> {
-    const finishedReservations =
-      await this.reservationLaboratoryEquipmentRepository
-        .createQueryBuilder('rle')
-        .where('rle.status = :status', {
-          status: StatusReservation.PENDING,
-        })
-        .andWhere(
-          `(
-          (rle.reservationFinalDate IS NULL AND 
-            CONCAT(rle.reservationDate, ' ', rle.finalHour) < :currentTime)
-          OR
-          (rle.reservationFinalDate IS NOT NULL AND 
-            CONCAT(rle.reservationFinalDate, ' ', rle.finalHour) < :currentTime)
-        )`,
-          {
-            currentTime: currentDateTime
-              .toISOString()
-              .slice(0, 19)
-              .replace('T', ' '),
-          },
-        )
-        .getMany();
-
-    await this.reservationLaboratoryEquipmentRepository.update(
-      {
-        reservationLaboratoryEquipmentId: In(
-          finishedReservations.map((fr) => fr.reservationLaboratoryEquipmentId),
-        ),
-      },
-      { status: StatusReservation.COMPLETED },
-    );
-    return {
-      completedCount: finishedReservations.length,
-      executedAt: currentDateTime,
-      message: `Se completaron ${finishedReservations.length} reservas que habían terminado su tiempo programado`,
-    };
+    return this.customService.completeFinishedReservations(currentDateTime);
   }
 
   async getLaboratoryEquipmentIdsWithReservations(): Promise<string[]> {
-    const reservations = await this.reservationLaboratoryEquipmentRepository
-      .createQueryBuilder('rle')
-      .select('DISTINCT(rle.laboratoryEquipmentId)', 'laboratoryEquipmentId')
-      .getRawMany();
-
-    return reservations.map((r) => r.laboratoryEquipmentId as string);
+    return this.customService.getLaboratoryEquipmentIdsWithReservations();
   }
 }

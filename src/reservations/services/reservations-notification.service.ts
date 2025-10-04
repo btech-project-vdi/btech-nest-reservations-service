@@ -4,10 +4,12 @@ import { InformationSubscriberDto } from '../dto/information-subscriber.dto';
 import { EmailsClient } from '../../grpc/clients/emails.client';
 import { FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto } from 'src/common/dto/find-one-laboratory-equipment-by-laboratory-equipment-id';
 import { formatDateToSpanish } from '../helpers/format-date-to-spanish.helper';
-import { ReservationLaboratoryEquipmentService } from './reservation-laboratory-equipment.service';
+import { ReservationLaboratoryEquipmentCustomService } from './reservation-laboratory-equipment-custom.service';
+import { ReservationLaboratoryEquipmentCoreService } from './reservation-laboratory-equipment-core.service';
 import { ReservationsCoreService } from './reservations-core.service';
 import { AdminLaboratoriesService } from 'src/common/services/admin-laboratories.service';
 import { SendReservationRemindersResponseDto } from '../dto/send-reservation-reminders-response.dto';
+import { EmailNotificationMetadataDto } from 'src/grpc/dto/send-lab-equipment-reservation-cancellation-email.dto';
 
 @Injectable()
 export class ReservationsNotificationService {
@@ -15,7 +17,10 @@ export class ReservationsNotificationService {
 
   constructor(
     private readonly emailsClient: EmailsClient,
-    private readonly reservationLaboratoryEquipmentService: ReservationLaboratoryEquipmentService,
+    @Inject(forwardRef(() => ReservationLaboratoryEquipmentCustomService))
+    private readonly reservationLaboratoryEquipmentCustomService: ReservationLaboratoryEquipmentCustomService,
+    @Inject(forwardRef(() => ReservationLaboratoryEquipmentCoreService))
+    private readonly reservationLaboratoryEquipmentCoreService: ReservationLaboratoryEquipmentCoreService,
     @Inject(forwardRef(() => ReservationsCoreService))
     private readonly reservationsCoreService: ReservationsCoreService,
     private readonly adminLaboratoriesService: AdminLaboratoriesService,
@@ -64,11 +69,30 @@ export class ReservationsNotificationService {
     }
   }
 
+  async sendCancellationEmail(
+    reservationLaboratoryEquipmentId: string,
+    metadata: EmailNotificationMetadataDto,
+    subscriptionDetailId: string,
+  ): Promise<void> {
+    try {
+      await this.emailsClient.sendLabEquipmentReservationCancellationEmail({
+        reservationLaboratoryEquipmentId,
+        metadata,
+        subscriptionDetailId,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error enviando correo de cancelación para reserva ${reservationLaboratoryEquipmentId}`,
+        error,
+      );
+    }
+  }
+
   async sendReservationReminders(
     currentDateTime: Date,
   ): Promise<SendReservationRemindersResponseDto> {
     const upcomingReservations =
-      await this.reservationLaboratoryEquipmentService.findReservationsForReminder();
+      await this.reservationLaboratoryEquipmentCustomService.findReservationsForReminder();
     let processed = 0;
     let sent = 0;
     for (const reservationEquipment of upcomingReservations) {
@@ -120,7 +144,7 @@ export class ReservationsNotificationService {
               equipmentData?.equipment?.description || 'Equipo',
             primaryColor: '#007bff',
           });
-          await this.reservationLaboratoryEquipmentService.markReminderEmailSent(
+          await this.reservationLaboratoryEquipmentCoreService.markReminderEmailSent(
             reservationEquipment.reservationLaboratoryEquipmentId,
           );
           sent++;

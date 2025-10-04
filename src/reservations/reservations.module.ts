@@ -16,6 +16,9 @@ import { GrpcModule } from '../grpc/grpc.module';
 import { ReservationsAdminService } from './services/reservations-admin.service';
 import { ReservationCredentialsService } from './services/reservation-credentials.service';
 import { ReservationLaboratoryEquipmentService } from './services/reservation-laboratory-equipment.service';
+import { ReservationLaboratoryEquipmentCoreService } from './services/reservation-laboratory-equipment-core.service';
+import { ReservationLaboratoryEquipmentValidateService } from './services/reservation-laboratory-equipment-validate.service';
+import { ReservationLaboratoryEquipmentCustomService } from './services/reservation-laboratory-equipment-custom.service';
 
 @Module({
   imports: [
@@ -39,6 +42,9 @@ import { ReservationLaboratoryEquipmentService } from './services/reservation-la
     ReservationsAdminService,
     ReservationCredentialsService,
     ReservationLaboratoryEquipmentService,
+    ReservationLaboratoryEquipmentCoreService,
+    ReservationLaboratoryEquipmentValidateService,
+    ReservationLaboratoryEquipmentCustomService,
   ],
   exports: [
     ReservationsService,
