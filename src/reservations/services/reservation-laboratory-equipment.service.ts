@@ -23,6 +23,8 @@ import { ReservationsCoreService } from './reservations-core.service';
 import { ReservationCredentialsService } from './reservation-credentials.service';
 import { InformationSubscriberDto } from '../dto/information-subscriber.dto';
 import { AdminLaboratoriesService } from '../../common/services/admin-laboratories.service';
+import { EmailsClient } from 'src/grpc/clients/emails.client';
+import { EmailNotificationMetadataDto } from 'src/grpc/dto/send-lab-equipment-reservation-cancellation-email.dto';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentService {
@@ -33,6 +35,7 @@ export class ReservationLaboratoryEquipmentService {
     private readonly reservationCoreService: ReservationsCoreService,
     private readonly reservationCredentialsService: ReservationCredentialsService,
     private readonly adminLaboratoriesService: AdminLaboratoriesService,
+    private readonly emailsClient: EmailsClient,
   ) {}
   async create(
     createReservationDetailDto: CreateReservationDetailDto,
@@ -100,18 +103,40 @@ export class ReservationLaboratoryEquipmentService {
   async updateStatus(
     updateReservationStatusDto: UpdateReservationStatusDto,
   ): Promise<ResponseBaseMessageDto> {
-    const { reservationLaboratoryEquipmentId, status } =
+    const { reservationLaboratoryEquipmentId, status, subscriptionDetailId } =
       updateReservationStatusDto;
-    const reservationLaboratory =
-      await this.reservationLaboratoryEquipmentRepository.update(
-        { reservationLaboratoryEquipmentId },
-        { status, updatedAt: new Date() },
-      );
-    if (reservationLaboratory.affected === 0)
+
+    const reservationLaboratoryEquipment =
+      await this.reservationLaboratoryEquipmentRepository.findOne({
+        where: { reservationLaboratoryEquipmentId },
+      });
+
+    if (!reservationLaboratoryEquipment)
       throw new RpcException({
         status: HttpStatus.NOT_FOUND,
         message: `La reserva no se encuentra registrada`,
       });
+
+    const result = await this.reservationLaboratoryEquipmentRepository.update(
+      { reservationLaboratoryEquipmentId },
+      { status, updatedAt: new Date() },
+    );
+
+    if (result.affected === 0)
+      throw new RpcException({
+        status: HttpStatus.NOT_FOUND,
+        message: `La reserva no se encuentra registrada`,
+      });
+
+    if (status === StatusReservation.CANCELED) {
+      await this.emailsClient.sendLabEquipmentReservationCancellationEmail({
+        reservationLaboratoryEquipmentId,
+        metadata:
+          reservationLaboratoryEquipment.metadata as EmailNotificationMetadataDto,
+        subscriptionDetailId,
+      });
+    }
+
     return {
       message: `El item de reserva con el id ${reservationLaboratoryEquipmentId} fue actualizado con el estado ${status}`,
     };

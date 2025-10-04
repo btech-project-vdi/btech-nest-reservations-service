@@ -19,4 +19,10 @@ export class UpdateReservationStatusDto {
       'El campo status debe ser: PENDIENTE, CONFIRMADO, CULMINADO o CANCELADO',
   })
   status: StatusReservation;
+
+  @IsNotEmpty({ message: 'El campo subscriptionDetailId es obligatorio' })
+  @IsUUID('all', {
+    message: 'El campo subscriptionDetailId debe ser un UUID válido',
+  })
+  subscriptionDetailId: string;
 }

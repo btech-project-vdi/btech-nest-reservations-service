@@ -7,6 +7,10 @@ import {
   SendLabReservationEmailResponseDto,
 } from '../dto/send-lab-reservation-email.dto';
 import { SendLabReservationReminderEmailDto } from '../dto/send-lab-reservation-reminder-email.dto';
+import {
+  SendLabEquipmentReservationCancellationEmailDto,
+  SendLabEquipmentReservationCancellationEmailResponseDto,
+} from '../dto/send-lab-equipment-reservation-cancellation-email.dto';
 import { ClientGrpc } from '@nestjs/microservices';
 
 @Injectable()
@@ -37,6 +41,16 @@ export class EmailsClient implements OnModuleInit {
     return firstValueFrom(
       this.emailsService
         .sendLabReservationReminderEmail(request)
+        .pipe(timeout(8000), retry({ count: 2, delay: 1000 })),
+    );
+  }
+
+  async sendLabEquipmentReservationCancellationEmail(
+    request: SendLabEquipmentReservationCancellationEmailDto,
+  ): Promise<SendLabEquipmentReservationCancellationEmailResponseDto> {
+    return firstValueFrom(
+      this.emailsService
+        .sendLabEquipmentReservationCancellationEmail(request)
         .pipe(timeout(8000), retry({ count: 2, delay: 1000 })),
     );
   }
