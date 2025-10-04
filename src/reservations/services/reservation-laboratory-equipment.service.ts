@@ -128,13 +128,17 @@ export class ReservationLaboratoryEquipmentService {
         message: `La reserva no se encuentra registrada`,
       });
 
-    if (status === StatusReservation.CANCELED) {
-      await this.emailsClient.sendLabEquipmentReservationCancellationEmail({
-        reservationLaboratoryEquipmentId,
-        metadata:
-          reservationLaboratoryEquipment.metadata as EmailNotificationMetadataDto,
-        subscriptionDetailId: subscriptionDetailId ?? '',
-      });
+    if (status === StatusReservation.CANCELED && subscriptionDetailId) {
+      try {
+        await this.emailsClient.sendLabEquipmentReservationCancellationEmail({
+          reservationLaboratoryEquipmentId,
+          metadata:
+            reservationLaboratoryEquipment.metadata as EmailNotificationMetadataDto,
+          subscriptionDetailId,
+        });
+      } catch (error) {
+        console.error('Error sending cancellation email:', error);
+      }
     }
 
     return {
