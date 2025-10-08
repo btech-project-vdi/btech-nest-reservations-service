@@ -20,7 +20,7 @@ export class SchedulersService {
     );
     this.jobLogger.logJobScheduled(
       this.sendReservationRemindersJob.name,
-      JobFrequency.EVERY_5_MINUTES,
+      JobFrequency.EVERY_10_MINUTES,
     );
   }
 
@@ -45,26 +45,26 @@ export class SchedulersService {
     );
   }
 
-  // @Cron(JobFrequency.EVERY_5_MINUTES, {
-  //   name: 'send-reservation-reminders',
-  //   timeZone: 'America/Lima',
-  // })
-  // async executeSendReservationRemindersJob(): Promise<void> {
-  //   this.jobLogger.logJobStart(this.sendReservationRemindersJob.name);
-  //   const context: JobContext = {
-  //     timestamp: getCurrentDateInTimezone('America/Lima'),
-  //     timezone: 'America/Lima',
-  //     metadata: {
-  //       triggeredBy: 'scheduler',
-  //       executionId: Date.now(),
-  //     },
-  //   };
-  //   const result = await this.sendReservationRemindersJob.execute(context);
-  //   this.jobLogger.logExecution(
-  //     this.sendReservationRemindersJob.name,
-  //     result,
-  //   );
-  // }
+  @Cron(JobFrequency.EVERY_10_MINUTES, {
+    name: 'send-reservation-reminders',
+    timeZone: 'America/Lima',
+  })
+  async executeSendReservationRemindersJob(): Promise<void> {
+    this.jobLogger.logJobStart(this.sendReservationRemindersJob.name);
+    const context: JobContext = {
+      timestamp: getCurrentDateInTimezone('America/Lima'),
+      timezone: 'America/Lima',
+      metadata: {
+        triggeredBy: 'scheduler',
+        executionId: Date.now(),
+      },
+    };
+    const result = await this.sendReservationRemindersJob.execute(context);
+    this.jobLogger.logExecution(
+      this.sendReservationRemindersJob.name,
+      result,
+    );
+  }
 
   async executeJobManually(jobName: string): Promise<any> {
     const context: JobContext = {

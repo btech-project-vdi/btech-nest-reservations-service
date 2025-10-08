@@ -4,6 +4,7 @@ package subscribers;
 
 service SubscribersService {
   rpc FindSubscribersWithNaturalPersons(FindSubscribersWithNaturalPersonsRequest) returns (FindSubscribersWithNaturalPersonsResponse);
+  rpc ValidateSubscriberAlertLevel(ValidateSubscriberAlertLevelRequest) returns (ValidateSubscriberAlertLevelResponse);
 }
 
 message FindSubscribersWithNaturalPersonsRequest {
@@ -42,4 +43,20 @@ message FindSubscribersWithNaturalPersonsResponse {
   int32 page = 3;
   int32 limit = 4;
   int32 totalPages = 5;
+}
+
+message ValidateSubscriberAlertLevelRequest {
+  repeated string subscriberIds = 1;
+  string levelAlertCode = 2;
+}
+
+message SubscriberAlertLevelValidation {
+  string subscriberId = 1;
+  bool hasAlertLevel = 2;
+  optional int32 alertMinutesBefore = 3;
+  optional string subscriptionDetailId = 4;
+}
+
+message ValidateSubscriberAlertLevelResponse {
+  repeated SubscriberAlertLevelValidation data = 1;
 }

@@ -73,11 +73,4 @@ export class ReservationLaboratoryEquipment extends Timestamped {
     nullable: false,
   })
   status: StatusReservation;
-
-  @Column({
-    type: 'boolean',
-    nullable: false,
-    default: false,
-  })
-  reminderEmailSent: boolean;
 }

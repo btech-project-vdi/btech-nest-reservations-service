@@ -10,6 +10,7 @@ import { paginate } from 'src/common/helpers/paginate.helper';
 import { Paginated } from 'src/common/dto/paginated.dto';
 import { CompleteFinishedReservationsResponseDto } from '../dto/complete-finished-reservations.dto';
 import { ReservationsCoreService } from './reservations-core.service';
+import { getCurrentDateInTimezone } from 'src/schedulers/helpers/timezone.helper';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentCustomService {
@@ -49,11 +50,22 @@ export class ReservationLaboratoryEquipmentCustomService {
   async findReservationsForReminder(): Promise<
     ReservationLaboratoryEquipment[]
   > {
+    const now = getCurrentDateInTimezone('America/Lima');
+    const lookbackMinutes = 10;
+    const lookaheadHours = 24;
+
+    const startDate = new Date(now.getTime() - lookbackMinutes * 60000);
+    const endDate = new Date(now.getTime() + lookaheadHours * 3600000);
+
     return await this.reservationLaboratoryEquipmentRepository
       .createQueryBuilder('rle')
       .leftJoinAndSelect('rle.reservation', 'reservation')
-      .where('rle.reminderEmailSent = false')
-      .andWhere('rle.reservationDate >= CURDATE()')
+      .where('rle.reservationDate >= :startDate', {
+        startDate: startDate.toISOString().split('T')[0],
+      })
+      .andWhere('rle.reservationDate <= :endDate', {
+        endDate: endDate.toISOString().split('T')[0],
+      })
       .andWhere('rle.status = :status', { status: StatusReservation.PENDING })
       .getMany();
   }

@@ -10,4 +10,5 @@ export class SendLabReservationReminderEmailDto {
   labDescription: string;
   equipmentDescription: string;
   primaryColor: string;
+  subscriptionDetailId: string;
 }

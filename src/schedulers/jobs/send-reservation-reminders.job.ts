@@ -32,7 +32,7 @@ export class SendReservationRemindersJob implements SchedulableJob {
         status: JobStatus.SUCCESS,
         executionTime: Date.now() - startTime,
         data: result,
-        affectedRows: result.sent,
+        affectedRows: result.totalSent,
       };
     } catch (error) {
       return {

@@ -119,11 +119,4 @@ export class ReservationLaboratoryEquipmentCoreService {
       message: `El item de reserva con el id ${reservationLaboratoryEquipmentId} fue actualizado con el estado ${status}`,
     };
   }
-
-  async markReminderEmailSent(reservationId: string): Promise<void> {
-    await this.reservationLaboratoryEquipmentRepository.update(
-      { reservationLaboratoryEquipmentId: reservationId },
-      { reminderEmailSent: true },
-    );
-  }
 }

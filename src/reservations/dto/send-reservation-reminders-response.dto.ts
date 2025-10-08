@@ -1,6 +1,9 @@
 export class SendReservationRemindersResponseDto {
   processed: number;
-  sent: number;
+  sentALE1: number;
+  sentALE2: number;
+  sentALE3: number;
+  totalSent: number;
   executedAt: Date;
   message: string;
 }

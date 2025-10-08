@@ -40,6 +40,7 @@ message SendLabReservationReminderEmailRequest {
   string labDescription = 9;
   string equipmentDescription = 10;
   string primaryColor = 11;
+  string subscriptionDetailId = 12;
 }
 
 message ReservationMetadata {

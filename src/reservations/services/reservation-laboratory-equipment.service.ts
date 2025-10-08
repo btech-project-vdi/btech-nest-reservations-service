@@ -91,10 +91,6 @@ export class ReservationLaboratoryEquipmentService {
     return this.customService.findReservationsForReminder();
   }
 
-  async markReminderEmailSent(reservationId: string): Promise<void> {
-    return this.coreService.markReminderEmailSent(reservationId);
-  }
-
   async completeFinishedReservations(
     currentDateTime: Date,
   ): Promise<CompleteFinishedReservationsResponseDto> {

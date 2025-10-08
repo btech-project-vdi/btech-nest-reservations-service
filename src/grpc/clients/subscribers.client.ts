@@ -6,6 +6,10 @@ import {
   FindSubscribersWithNaturalPersonsDto,
   FindSubscribersWithNaturalPersonsResponseDto,
 } from '../dto/find-subscribers-with-natural-persons.dto';
+import {
+  ValidateSubscriberAlertLevelDto,
+  ValidateSubscriberAlertLevelResponseDto,
+} from '../dto/validate-subscriber-alert-level.dto';
 import { ClientGrpc } from '@nestjs/microservices';
 
 @Injectable()
@@ -27,6 +31,16 @@ export class SubscribersClient implements OnModuleInit {
     return firstValueFrom(
       this.subscribersService
         .findSubscribersWithNaturalPersons(request)
+        .pipe(timeout(8000), retry({ count: 2, delay: 1000 })),
+    );
+  }
+
+  async validateSubscriberAlertLevel(
+    request: ValidateSubscriberAlertLevelDto,
+  ): Promise<ValidateSubscriberAlertLevelResponseDto> {
+    return firstValueFrom(
+      this.subscribersService
+        .validateSubscriberAlertLevel(request)
         .pipe(timeout(8000), retry({ count: 2, delay: 1000 })),
     );
   }
