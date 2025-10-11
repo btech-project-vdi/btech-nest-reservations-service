@@ -5,6 +5,7 @@ package subscribers;
 service SubscribersService {
   rpc FindSubscribersWithNaturalPersons(FindSubscribersWithNaturalPersonsRequest) returns (FindSubscribersWithNaturalPersonsResponse);
   rpc ValidateSubscriberAlertLevel(ValidateSubscriberAlertLevelRequest) returns (ValidateSubscriberAlertLevelResponse);
+  rpc FindUserProfile(FindUserByIdRequest) returns (UserProfileResponse);
 }
 
 message FindSubscribersWithNaturalPersonsRequest {
@@ -60,3 +61,47 @@ message SubscriberAlertLevelValidation {
 message ValidateSubscriberAlertLevelResponse {
   repeated SubscriberAlertLevelValidation data = 1;
 }
+
+message FindUserByIdRequest {
+  string subscriberId = 1;
+  string service = 2;
+}
+
+message NaturalPerson {
+  string naturalPersonId = 1;
+  string personId = 2;
+  string fullName = 3;
+  string paternalSurname = 4;
+  string maternalSurname = 5;
+  string documentNumber = 6;
+  string documentType = 7;
+  repeated PersonInformation personInformation = 8;
+}
+
+message PersonInfo {
+  string personId = 1;
+  string fullName = 2;
+}
+
+message SubscriptionInfo {
+  string subscriptionId = 1;
+  string subscriptionBussineId = 2;
+  string subscriptionDetailId = 3;
+  string status = 4;
+  string initialDate = 5;
+  string finalDate = 6;
+  optional string url = 7;
+  PersonInfo person = 8;
+}
+
+message UserProfileResponse {
+  string subscriberId = 1;
+  string username = 2;
+  bool isTwoFactorEnabled = 3;
+  repeated string roles = 4;
+  bool hasPassword = 5;
+  NaturalPerson naturalPerson = 6;
+  SubscriptionInfo subscription = 7;
+}
+
+

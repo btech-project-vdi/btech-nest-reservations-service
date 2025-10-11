@@ -7,6 +7,10 @@ import {
   ValidateSubscriberAlertLevelDto,
   ValidateSubscriberAlertLevelResponseDto,
 } from '../dto/validate-subscriber-alert-level.dto';
+import {
+  FindUserProfileDto,
+  UserProfileResponseDto,
+} from '../dto/find-user-profile.dto';
 
 export interface SubscribersService {
   findSubscribersWithNaturalPersons(
@@ -16,4 +20,6 @@ export interface SubscribersService {
   validateSubscriberAlertLevel(
     data: ValidateSubscriberAlertLevelDto,
   ): Observable<ValidateSubscriberAlertLevelResponseDto>;
+
+  findUserProfile(data: FindUserProfileDto): Observable<UserProfileResponseDto>;
 }

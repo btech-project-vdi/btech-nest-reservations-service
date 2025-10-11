@@ -90,12 +90,13 @@ export class ReservationLaboratoryEquipmentCoreService {
   async updateStatus(
     updateReservationStatusDto: UpdateReservationStatusDto,
   ): Promise<ResponseBaseMessageDto> {
-    const { reservationLaboratoryEquipmentId, status, subscriptionDetailId } =
+    const { reservationLaboratoryEquipmentId, status, subscriptionDetailId, user, requestMetadata } =
       updateReservationStatusDto;
 
     const reservationLaboratoryEquipment =
       await this.reservationLaboratoryEquipmentRepository.findOne({
         where: { reservationLaboratoryEquipmentId },
+        relations: ['reservation'],
       });
     if (!reservationLaboratoryEquipment)
       throw new RpcException({
@@ -113,6 +114,9 @@ export class ReservationLaboratoryEquipmentCoreService {
         reservationLaboratoryEquipmentId,
         reservationLaboratoryEquipment.metadata as EmailNotificationMetadataDto,
         subscriptionDetailId,
+        reservationLaboratoryEquipment.reservation?.subscriberId,
+        user,
+        requestMetadata,
       );
 
     return {

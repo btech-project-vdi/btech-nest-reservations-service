@@ -20,6 +20,7 @@ import { ReservationsAvailabilityService } from './reservations-availability.ser
 import { ReservationsNotificationService } from './reservations-notification.service';
 import { AdminLaboratoriesService } from '../../common/services/admin-laboratories.service';
 import { TransactionService } from 'src/common/services/transaction.service';
+import { ReservationLaboratoryEquipmentCustomService } from './reservation-laboratory-equipment-custom.service';
 
 // Helpers
 import { formatReservationResponse } from '../helpers/format-reservation-response.helper';
@@ -33,6 +34,7 @@ export class ReservationsCoreService {
     @InjectRepository(Reservation)
     private readonly reservationRepository: Repository<Reservation>,
     private readonly reservationLaboratoryEquipmentService: ReservationLaboratoryEquipmentService,
+    private readonly reservationLaboratoryEquipmentCustomService: ReservationLaboratoryEquipmentCustomService,
     private readonly reservationsValidationService: ReservationsValidationService,
     private readonly reservationsAvailabilityService: ReservationsAvailabilityService,
     private readonly reservationsNotificationService: ReservationsNotificationService,
@@ -44,8 +46,12 @@ export class ReservationsCoreService {
     user: SessionUserDataDto,
     createReservationDto: CreateReservationDto,
   ): Promise<CreateReservationResponseDto> {
-    const { metadata, reservationDetails, informationSubscriber } =
-      createReservationDto;
+    const {
+      metadata,
+      reservationDetails,
+      informationSubscriber,
+      requestMetadata,
+    } = createReservationDto;
     const existingUserReservations =
       await this.reservationsValidationService.prepareAndValidateReservation(
         user,
@@ -67,14 +73,17 @@ export class ReservationsCoreService {
             ),
           ),
         );
-
+        // Obtener metadata del suscriptor desde gRPC si no se proporciona metadata personalizada
+        const reservationMetadata =
+          metadata ??
+          (await this.reservationLaboratoryEquipmentCustomService.getSubscriberMetadataForReservation(
+            user.subscriberId,
+            user.username,
+          ));
         const reservation = queryRunner.manager.create(Reservation, {
           subscriberId: user.subscriberId,
           username: user.username,
-          metadata: metadata ?? {
-            'Fecha de creación': new Date().toISOString(),
-            'Codigo de usuario': user.username,
-          },
+          metadata: reservationMetadata,
           reservationLaboratoryEquipment: await Promise.all(
             reservationDetails.map((detail) =>
               this.reservationLaboratoryEquipmentService.create(
@@ -85,11 +94,9 @@ export class ReservationsCoreService {
             ),
           ),
         });
-
         const reservationSaved = await queryRunner.manager.save(reservation);
         const reservationFormatted =
           formatReservationResponse(reservationSaved);
-
         const laboratoryEquipmentIds =
           reservationFormatted.reservationLaboratoryEquipment.map(
             (rle) => rle.laboratoryEquipmentId,
@@ -102,6 +109,8 @@ export class ReservationsCoreService {
           informationSubscriber,
           equipmentMap,
           user.subscription.subscriptionDetailId,
+          user,
+          requestMetadata,
         );
         return reservationFormatted;
       },

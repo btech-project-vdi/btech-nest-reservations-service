@@ -11,6 +11,7 @@ import { Paginated } from 'src/common/dto/paginated.dto';
 import { CompleteFinishedReservationsResponseDto } from '../dto/complete-finished-reservations.dto';
 import { ReservationsCoreService } from './reservations-core.service';
 import { getCurrentDateInTimezone } from 'src/schedulers/helpers/timezone.helper';
+import { SubscribersClient } from 'src/grpc/clients/subscribers.client';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentCustomService {
@@ -19,6 +20,7 @@ export class ReservationLaboratoryEquipmentCustomService {
     private readonly reservationLaboratoryEquipmentRepository: Repository<ReservationLaboratoryEquipment>,
     @Inject(forwardRef(() => ReservationsCoreService))
     private readonly reservationCoreService: ReservationsCoreService,
+    private readonly subscribersClient: SubscribersClient,
   ) {}
 
   async confirmListReservation(
@@ -119,5 +121,72 @@ export class ReservationLaboratoryEquipmentCustomService {
         .getRawMany();
 
     return reservations.map((r) => r.laboratoryEquipmentId);
+  }
+
+  async getSubscriberMetadataForReservation(
+    subscriberId: string,
+    username: string,
+  ): Promise<Record<string, any>> {
+    try {
+      // Obtener información del perfil del suscriptor desde gRPC
+      const userProfile = await this.subscribersClient.findUserProfile({
+        subscriberId,
+        service: 'VDI',
+      });
+      // Verificar si se encontró información del usuario
+      if (!userProfile || !userProfile.naturalPerson)
+        // Si no se encuentra información, devolver metadata básica
+        return {
+          'Codigo de usuario': username,
+          'Fecha de creación': new Date().toISOString(),
+        };
+      const naturalPerson = userProfile.naturalPerson;
+      // Formatear la metadata según la estructura requerida
+      const metadata = {
+        naturalPerson: {
+          fullName: naturalPerson.fullName,
+          documentType: naturalPerson.documentType,
+          documentNumber: naturalPerson.documentNumber,
+          maternalSurname: naturalPerson.maternalSurname,
+          naturalPersonId: naturalPerson.naturalPersonId,
+          paternalSurname: naturalPerson.paternalSurname,
+          personInformation: naturalPerson.personInformation.map((info) => ({
+            description: info.description,
+            informationType: info.informationType,
+          })),
+        },
+        'Codigo de usuario': username,
+        'Fecha de creación': new Date().toISOString(),
+      };
+      return metadata;
+    } catch (error) {
+      // En caso de error con el servicio gRPC, devolver metadata básica
+      console.error(
+        'Error al obtener metadata del suscriptor desde gRPC:',
+        error,
+      );
+      return {
+        'Codigo de usuario': username,
+        'Fecha de creación': new Date().toISOString(),
+      };
+    }
+  }
+
+  async getSubscriberProfileForGrpcMetadata(
+    subscriberId: string,
+  ): Promise<Record<string, any> | undefined> {
+    try {
+      const userProfile = await this.subscribersClient.findUserProfile({
+        subscriberId,
+        service: 'VDI',
+      });
+      return userProfile ? (userProfile as Record<string, any>) : undefined;
+    } catch (error) {
+      console.error(
+        'Error al obtener perfil del suscriptor desde gRPC:',
+        error,
+      );
+      return undefined;
+    }
   }
 }

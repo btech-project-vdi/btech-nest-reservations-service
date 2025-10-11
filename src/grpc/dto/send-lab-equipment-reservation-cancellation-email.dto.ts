@@ -1,3 +1,9 @@
+export class GrpcMetadataDto {
+  ipAddress?: string;
+  userAgent?: string;
+  subscriberId?: string;
+}
+
 export class EmailNotificationDataDto {
   logoUrl: string;
   finalHour: string;
@@ -21,6 +27,7 @@ export class SendLabEquipmentReservationCancellationEmailDto {
   reservationLaboratoryEquipmentId: string;
   metadata: EmailNotificationMetadataDto;
   subscriptionDetailId: string;
+  grpcMetadata?: GrpcMetadataDto;
 }
 
 export class SendLabEquipmentReservationCancellationEmailResponseDto {

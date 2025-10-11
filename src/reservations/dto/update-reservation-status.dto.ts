@@ -1,5 +1,8 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsUUID, ValidateNested } from 'class-validator';
 import { StatusReservation } from '../enums/status-reservation.enum';
+import { SessionUserDataDto } from 'src/common/dto/session-user-data-dto';
+import { Type } from 'class-transformer';
+import { RequestMetadataDto } from './create-reservation.dto';
 
 export class UpdateReservationStatusDto {
   @IsNotEmpty({
@@ -25,4 +28,12 @@ export class UpdateReservationStatusDto {
     message: 'El campo subscriptionDetailId debe ser un UUID válido',
   })
   subscriptionDetailId?: string;
+
+  @IsOptional()
+  user?: SessionUserDataDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => RequestMetadataDto)
+  requestMetadata?: RequestMetadataDto;
 }

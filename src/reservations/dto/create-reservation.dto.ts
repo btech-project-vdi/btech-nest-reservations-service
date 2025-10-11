@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsOptional, ValidateNested } from 'class-validator';
+import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
   CreateReservationDetailDto,
   CreateReservationDetailResponseDto,
@@ -8,12 +8,27 @@ import { SubscriberInfoDto } from 'src/common/dto/subscriber-info.dto';
 import { SessionUserDataDto } from 'src/common/dto/session-user-data-dto';
 import { InformationSubscriberDto } from './information-subscriber.dto';
 
+export class RequestMetadataDto {
+  @IsOptional()
+  @IsString()
+  ipAddress?: string;
+
+  @IsOptional()
+  @IsString()
+  userAgent?: string;
+}
+
 export class CreateReservationDto {
   @IsOptional()
   user: SessionUserDataDto;
 
   @IsOptional()
   metadata?: Record<string, any>;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => RequestMetadataDto)
+  requestMetadata?: RequestMetadataDto;
 
   @IsArray({ message: 'Los detalles deben ser un arreglo' })
   @ValidateNested({ each: true })

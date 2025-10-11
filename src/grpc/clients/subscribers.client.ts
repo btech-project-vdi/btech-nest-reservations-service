@@ -10,6 +10,10 @@ import {
   ValidateSubscriberAlertLevelDto,
   ValidateSubscriberAlertLevelResponseDto,
 } from '../dto/validate-subscriber-alert-level.dto';
+import {
+  FindUserProfileDto,
+  UserProfileResponseDto,
+} from '../dto/find-user-profile.dto';
 import { ClientGrpc } from '@nestjs/microservices';
 
 @Injectable()
@@ -41,6 +45,16 @@ export class SubscribersClient implements OnModuleInit {
     return firstValueFrom(
       this.subscribersService
         .validateSubscriberAlertLevel(request)
+        .pipe(timeout(8000), retry({ count: 2, delay: 1000 })),
+    );
+  }
+
+  async findUserProfile(
+    request: FindUserProfileDto,
+  ): Promise<UserProfileResponseDto> {
+    return firstValueFrom(
+      this.subscribersService
+        .findUserProfile(request)
         .pipe(timeout(8000), retry({ count: 2, delay: 1000 })),
     );
   }

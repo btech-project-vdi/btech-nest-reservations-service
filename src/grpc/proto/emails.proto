@@ -8,6 +8,12 @@ service EmailsService {
   rpc SendLabEquipmentReservationCancellationEmail(SendLabEquipmentReservationCancellationEmailRequest) returns (SendEmailResponse);
 }
 
+message GrpcMetadata {
+  optional string ipAddress = 1;
+  optional string userAgent = 2;
+  optional string subscriberId = 3;
+}
+
 message SendLabReservationEmailRequest {
   string to = 1;
   string companyName = 2;
@@ -17,6 +23,7 @@ message SendLabReservationEmailRequest {
   repeated ReservationDetail details = 6;
   string primaryColor = 7;
   string subscriptionDetailId = 8;
+  optional GrpcMetadata grpcMetadata = 9;
 }
 
 message ReservationDetail {
@@ -41,6 +48,7 @@ message SendLabReservationReminderEmailRequest {
   string equipmentDescription = 10;
   string primaryColor = 11;
   string subscriptionDetailId = 12;
+  optional GrpcMetadata grpcMetadata = 13;
 }
 
 message ReservationMetadata {
@@ -53,6 +61,7 @@ message SendLabEquipmentReservationCancellationEmailRequest {
   string reservationLaboratoryEquipmentId = 1;
   EmailNotificationMetadata metadata = 2;
   string subscriptionDetailId = 3;
+  optional GrpcMetadata grpcMetadata = 4;
 }
 
 message EmailNotificationMetadata {

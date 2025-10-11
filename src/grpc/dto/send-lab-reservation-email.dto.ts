@@ -1,3 +1,9 @@
+export class GrpcMetadataDto {
+  ipAddress?: string;
+  userAgent?: string;
+  subscriberId?: string;
+}
+
 export class SendLabReservationEmailDto {
   to: string;
   companyName: string;
@@ -7,6 +13,7 @@ export class SendLabReservationEmailDto {
   details: SendLabReservationEmailDetailsDto[];
   primaryColor: string;
   subscriptionDetailId: string;
+  grpcMetadata?: GrpcMetadataDto;
 }
 
 export class SendLabReservationEmailDetailsDto {

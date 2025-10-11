@@ -1,5 +1,8 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { CreateReservationResponseDto } from '../dto/create-reservation.dto';
+import {
+  CreateReservationResponseDto,
+  RequestMetadataDto,
+} from '../dto/create-reservation.dto';
 import { InformationSubscriberDto } from '../dto/information-subscriber.dto';
 import { EmailsClient } from '../../grpc/clients/emails.client';
 import { SubscribersClient } from '../../grpc/clients/subscribers.client';
@@ -14,6 +17,7 @@ import {
 } from 'src/grpc/dto/send-lab-equipment-reservation-cancellation-email.dto';
 import { LevelAlertCode } from 'src/common/enums/level-alert-code.enum';
 import { ReservationLaboratoryEquipment } from '../entities/reservation-laboratory-equipment.entity';
+import { SessionUserDataDto } from 'src/common/dto/session-user-data-dto';
 
 @Injectable()
 export class ReservationsNotificationService {
@@ -36,6 +40,8 @@ export class ReservationsNotificationService {
       FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto
     >,
     subscriptionDetailId: string,
+    user?: SessionUserDataDto,
+    requestMetadata?: RequestMetadataDto,
   ): Promise<void> {
     try {
       const { reservationLaboratoryEquipment } = reservation;
@@ -52,17 +58,23 @@ export class ReservationsNotificationService {
           metadata: rle.metadata,
         };
       });
-
-      await this.emailsClient.sendLabReservationEmail({
-        to: informationSubscriber.email,
-        companyName: informationSubscriber.companyName,
-        logoUrl: informationSubscriber.logoUrl,
-        userName: informationSubscriber.subscriberName,
-        reservationDate: formatDateToSpanish(reservation.createdAt),
-        details,
-        primaryColor: informationSubscriber.primaryColor,
-        subscriptionDetailId,
-      });
+      await this.emailsClient.sendLabReservationEmail(
+        {
+          to: informationSubscriber.email,
+          companyName: informationSubscriber.companyName,
+          logoUrl: informationSubscriber.logoUrl,
+          userName: informationSubscriber.subscriberName,
+          reservationDate: formatDateToSpanish(reservation.createdAt),
+          details,
+          primaryColor: informationSubscriber.primaryColor,
+          subscriptionDetailId,
+        },
+        {
+          ipAddress: requestMetadata?.ipAddress,
+          userAgent: requestMetadata?.userAgent,
+          subscriberId: user?.subscriberId,
+        },
+      );
     } catch (error) {
       this.logger.error(
         'Error enviando correo de confirmación de reserva',
@@ -75,13 +87,23 @@ export class ReservationsNotificationService {
     reservationLaboratoryEquipmentId: string,
     metadata: EmailNotificationMetadataDto,
     subscriptionDetailId: string,
+    subscriberId?: string,
+    user?: SessionUserDataDto,
+    requestMetadata?: RequestMetadataDto,
   ): Promise<void> {
     try {
-      await this.emailsClient.sendLabEquipmentReservationCancellationEmail({
-        reservationLaboratoryEquipmentId,
-        metadata,
-        subscriptionDetailId,
-      });
+      await this.emailsClient.sendLabEquipmentReservationCancellationEmail(
+        {
+          reservationLaboratoryEquipmentId,
+          metadata,
+          subscriptionDetailId,
+        },
+        {
+          ipAddress: requestMetadata?.ipAddress,
+          userAgent: requestMetadata?.userAgent,
+          subscriberId,
+        },
+      );
     } catch (error) {
       this.logger.error(
         `Error enviando correo de cancelación para reserva ${reservationLaboratoryEquipmentId}`,
@@ -296,6 +318,7 @@ export class ReservationsNotificationService {
       );
       return;
     }
+
     const equipmentMap =
       await this.reservationsCoreService.findEquipmentMapData([
         reservationEquipment.laboratoryEquipmentId,
@@ -303,22 +326,27 @@ export class ReservationsNotificationService {
     const equipmentData = equipmentMap.get(
       reservationEquipment.laboratoryEquipmentId,
     );
-    await this.emailsClient.sendLabReservationReminderEmail({
-      to: emailData.subscriberEmail || '',
-      companyName: emailData.companyName || '',
-      logoUrl: emailData.logoUrl || '',
-      userName: emailData.subscriberName || '',
-      reminderMinutes: reminderMinutes,
-      reservationDate: formatDateToSpanish(
-        reservationEquipment.reservationDate.toString(),
-      ),
-      startTime: reservationEquipment.initialHour,
-      endTime: reservationEquipment.finalHour,
-      labDescription: equipmentData?.laboratory?.description || 'Laboratorio',
-      equipmentDescription: equipmentData?.equipment?.description || 'Equipo',
-      primaryColor: emailData.primaryColor || '#007bff',
-      subscriptionDetailId: subscriptionDetailId,
-    });
+    await this.emailsClient.sendLabReservationReminderEmail(
+      {
+        to: emailData.subscriberEmail || '',
+        companyName: emailData.companyName || '',
+        logoUrl: emailData.logoUrl || '',
+        userName: emailData.subscriberName || '',
+        reminderMinutes: reminderMinutes,
+        reservationDate: formatDateToSpanish(
+          reservationEquipment.reservationDate.toString(),
+        ),
+        startTime: reservationEquipment.initialHour,
+        endTime: reservationEquipment.finalHour,
+        labDescription: equipmentData?.laboratory?.description || 'Laboratorio',
+        equipmentDescription: equipmentData?.equipment?.description || 'Equipo',
+        primaryColor: emailData.primaryColor || '#007bff',
+        subscriptionDetailId: subscriptionDetailId,
+      },
+      {
+        subscriberId,
+      },
+    );
     this.logger.log(
       `Alerta ${alertLevel} enviada para reserva ${reservationEquipment.reservationLaboratoryEquipmentId}`,
     );

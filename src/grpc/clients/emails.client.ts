@@ -13,6 +13,12 @@ import {
 } from '../dto/send-lab-equipment-reservation-cancellation-email.dto';
 import { ClientGrpc } from '@nestjs/microservices';
 
+export interface GrpcCallMetadata {
+  ipAddress?: string;
+  userAgent?: string;
+  subscriberId?: string;
+}
+
 @Injectable()
 export class EmailsClient implements OnModuleInit {
   private emailsService: EmailsService;
@@ -27,30 +33,63 @@ export class EmailsClient implements OnModuleInit {
 
   async sendLabReservationEmail(
     request: SendLabReservationEmailDto,
+    callMetadata?: GrpcCallMetadata,
   ): Promise<SendLabReservationEmailResponseDto> {
+    const enrichedRequest = {
+      ...request,
+      grpcMetadata: callMetadata
+        ? {
+            ipAddress: callMetadata.ipAddress,
+            userAgent: callMetadata.userAgent,
+            subscriberId: callMetadata.subscriberId,
+          }
+        : undefined,
+    };
     return firstValueFrom(
       this.emailsService
-        .sendLabReservationEmail(request)
+        .sendLabReservationEmail(enrichedRequest)
         .pipe(timeout(8000), retry({ count: 2, delay: 1000 })),
     );
   }
 
   async sendLabReservationReminderEmail(
     request: SendLabReservationReminderEmailDto,
+    callMetadata?: GrpcCallMetadata,
   ): Promise<SendLabReservationEmailResponseDto> {
+    const enrichedRequest = {
+      ...request,
+      grpcMetadata: callMetadata
+        ? {
+            ipAddress: callMetadata.ipAddress,
+            userAgent: callMetadata.userAgent,
+            subscriberId: callMetadata.subscriberId,
+          }
+        : undefined,
+    };
     return firstValueFrom(
       this.emailsService
-        .sendLabReservationReminderEmail(request)
+        .sendLabReservationReminderEmail(enrichedRequest)
         .pipe(timeout(8000), retry({ count: 2, delay: 1000 })),
     );
   }
 
   async sendLabEquipmentReservationCancellationEmail(
     request: SendLabEquipmentReservationCancellationEmailDto,
+    callMetadata?: GrpcCallMetadata,
   ): Promise<SendLabEquipmentReservationCancellationEmailResponseDto> {
+    const enrichedRequest = {
+      ...request,
+      grpcMetadata: callMetadata
+        ? {
+            ipAddress: callMetadata.ipAddress,
+            userAgent: callMetadata.userAgent,
+            subscriberId: callMetadata.subscriberId,
+          }
+        : undefined,
+    };
     return firstValueFrom(
       this.emailsService
-        .sendLabEquipmentReservationCancellationEmail(request)
+        .sendLabEquipmentReservationCancellationEmail(enrichedRequest)
         .pipe(timeout(8000), retry({ count: 2, delay: 1000 })),
     );
   }
