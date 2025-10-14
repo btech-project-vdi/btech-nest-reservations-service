@@ -150,13 +150,17 @@ export class ReservationCredentialsService {
       });
     // Determinar qué contraseña usar según la hora de la reserva
     const passwordKey = getPasswordKeyByTime(reservationHour);
-    const password = equipmentCredentials[passwordKey] as string;
-    // Si no existe la credencial para ese turno (ej: dawn1/dawn2 no existe en este laboratorio)
-    if (!password)
-      throw new RpcException({
-        status: HttpStatus.BAD_REQUEST,
-        message: `El laboratorio ${labPrefix} no tiene credenciales disponibles para el turno ${passwordKey} (hora: ${reservationHour}). Este laboratorio no soporta reservas en este horario.`,
-      });
+    let password = equipmentCredentials[passwordKey] as string;
+    // Si no existe la credencial para ese turno, usar fallback a 'night' (por defecto)
+    if (!password) {
+      password = equipmentCredentials.night as string;
+      // Si tampoco existe 'night', lanzar error
+      if (!password)
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: `El laboratorio ${labPrefix} no tiene credenciales disponibles para el turno ${passwordKey} ni credenciales por defecto. Contacte al administrador.`,
+        });
+    }
     return {
       accessUrl: 'https://ucv.ia4cloud.com', // URL base del VDI
       username: equipmentName,
