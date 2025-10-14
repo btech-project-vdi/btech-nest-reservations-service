@@ -10,6 +10,7 @@ import { RpcException } from '@nestjs/microservices';
 import { ReservationCredentials } from '../interfaces/reservation-credentials.interface';
 import { getConflictingUserIndices } from '../helpers/get-conflict-user-indices.helper';
 import { findAvailableUserIndex } from '../helpers/find-available-user-index.helper';
+import { getPasswordKeyByTime } from '../helpers/get-password-key-by-time.helper';
 
 @Injectable()
 export class ReservationCredentialsService {
@@ -47,6 +48,7 @@ export class ReservationCredentialsService {
       laboratoryMetadata,
       laboratoryEquipmentId,
       availableUserIndex,
+      initialHour,
     );
   }
 
@@ -126,13 +128,13 @@ export class ReservationCredentialsService {
     laboratoryMetadata: Record<string, any>,
     laboratoryEquipmentId: string,
     userIndex: number,
+    reservationHour: string,
   ): ReservationCredentials {
     // Determinar el nombre del equipo basándose en el índice
     const equipmentKeys = Object.keys(laboratoryMetadata);
     const equipmentPattern =
       equipmentKeys.find((key) => key.includes('-DOC')) || '';
     const labPrefix = equipmentPattern.replace('-DOC', '');
-
     let equipmentName: string;
     if (userIndex === 0) {
       equipmentName = `${labPrefix}-DOC`;
@@ -146,13 +148,19 @@ export class ReservationCredentialsService {
         status: HttpStatus.NOT_FOUND,
         message: `No se encontraron credenciales para el equipo ${equipmentName}`,
       });
-    // Las credenciales están en formato { morning1, morning2, afternoon, night }
-    // Siempre usar las credenciales nocturnas como se especificó
-    const nightCredentials = equipmentCredentials.night as string;
+    // Determinar qué contraseña usar según la hora de la reserva
+    const passwordKey = getPasswordKeyByTime(reservationHour);
+    const password = equipmentCredentials[passwordKey] as string;
+    // Si no existe la credencial para ese turno (ej: dawn1/dawn2 no existe en este laboratorio)
+    if (!password)
+      throw new RpcException({
+        status: HttpStatus.BAD_REQUEST,
+        message: `El laboratorio ${labPrefix} no tiene credenciales disponibles para el turno ${passwordKey} (hora: ${reservationHour}). Este laboratorio no soporta reservas en este horario.`,
+      });
     return {
       accessUrl: 'https://ucv.ia4cloud.com', // URL base del VDI
       username: equipmentName,
-      password: nightCredentials,
+      password: password,
     };
   }
 }
