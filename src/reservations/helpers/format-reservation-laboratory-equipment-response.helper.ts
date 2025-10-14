@@ -17,16 +17,24 @@ export const formatReservationLaboratoryEquipmentResponse = (
   endDate.setHours(endHours, endMinutes, 0, 0);
   const durationInMs = endDate.getTime() - startDate.getTime();
   const duration = Math.round(durationInMs / (1000 * 60));
+
+  // Convertir las fechas a formato YYYY-MM-DD de forma segura
+  const formatDate = (date: Date | string): string => {
+    if (typeof date === 'string') {
+      // Si ya es string, asumimos que está en formato correcto
+      return date.split('T')[0];
+    }
+    return date.toISOString().split('T')[0];
+  };
+
   return {
     reservationLaboratoryEquipmentId:
       reservationLaboratoryEquipment.reservationLaboratoryEquipmentId,
     laboratoryEquipmentId: reservationLaboratoryEquipment.laboratoryEquipmentId,
-    reservationDate: reservationLaboratoryEquipment.reservationDate
-      .toISOString()
-      .split('T')[0],
-    reservationFinalDate: reservationLaboratoryEquipment.reservationFinalDate
-      .toISOString()
-      .split('T')[0],
+    reservationDate: formatDate(reservationLaboratoryEquipment.reservationDate),
+    reservationFinalDate: formatDate(
+      reservationLaboratoryEquipment.reservationFinalDate,
+    ),
     initialHour: reservationLaboratoryEquipment.initialHour,
     finalHour: reservationLaboratoryEquipment.finalHour,
     duration,
