@@ -12,6 +12,8 @@ import { RpcException } from '@nestjs/microservices';
 import { StatusReservation } from '../enums/status-reservation.enum';
 import { ReservationsNotificationService } from './reservations-notification.service';
 import { EmailNotificationMetadataDto } from 'src/grpc/dto/send-lab-equipment-reservation-cancellation-email.dto';
+import { FindOneReservationLaboratoryEquipmentResponseDto } from '../dto/find-one-reservation-laboratory-equipment.dto';
+import { formatReservationLaboratoryEquipmentResponse } from '../helpers/format-reservation-laboratory-equipment-response.helper';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentCoreService {
@@ -90,8 +92,13 @@ export class ReservationLaboratoryEquipmentCoreService {
   async updateStatus(
     updateReservationStatusDto: UpdateReservationStatusDto,
   ): Promise<ResponseBaseMessageDto> {
-    const { reservationLaboratoryEquipmentId, status, subscriptionDetailId, user, requestMetadata } =
-      updateReservationStatusDto;
+    const {
+      reservationLaboratoryEquipmentId,
+      status,
+      subscriptionDetailId,
+      user,
+      requestMetadata,
+    } = updateReservationStatusDto;
 
     const reservationLaboratoryEquipment =
       await this.reservationLaboratoryEquipmentRepository.findOne({
@@ -108,7 +115,6 @@ export class ReservationLaboratoryEquipmentCoreService {
     await this.reservationLaboratoryEquipmentRepository.save(
       reservationLaboratoryEquipment,
     );
-
     if (status === StatusReservation.CANCELED && subscriptionDetailId)
       this.reservationsNotificationService.sendCancellationEmail(
         reservationLaboratoryEquipmentId,
@@ -118,9 +124,25 @@ export class ReservationLaboratoryEquipmentCoreService {
         user,
         requestMetadata,
       );
-
     return {
       message: `El item de reserva con el id ${reservationLaboratoryEquipmentId} fue actualizado con el estado ${status}`,
     };
+  }
+
+  async findOne(
+    reservationLaboratoryEquipmentId: string,
+  ): Promise<FindOneReservationLaboratoryEquipmentResponseDto> {
+    const reservationLaboratoryEquipment =
+      await this.reservationLaboratoryEquipmentRepository.findOne({
+        where: { reservationLaboratoryEquipmentId },
+      });
+    if (!reservationLaboratoryEquipment)
+      throw new RpcException({
+        status: HttpStatus.NOT_FOUND,
+        message: `El item de reserva con el id ${reservationLaboratoryEquipmentId} no se encuentra registrado`,
+      });
+    return formatReservationLaboratoryEquipmentResponse(
+      reservationLaboratoryEquipment,
+    );
   }
 }

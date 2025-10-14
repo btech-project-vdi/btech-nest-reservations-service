@@ -17,6 +17,7 @@ import { StatusReservation } from '../enums/status-reservation.enum';
 import { ReservationLaboratoryEquipmentCoreService } from './reservation-laboratory-equipment-core.service';
 import { ReservationLaboratoryEquipmentValidateService } from './reservation-laboratory-equipment-validate.service';
 import { ReservationLaboratoryEquipmentCustomService } from './reservation-laboratory-equipment-custom.service';
+import { FindOneReservationLaboratoryEquipmentResponseDto } from '../dto/find-one-reservation-laboratory-equipment.dto';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentService {
@@ -99,5 +100,11 @@ export class ReservationLaboratoryEquipmentService {
 
   async getLaboratoryEquipmentIdsWithReservations(): Promise<string[]> {
     return this.customService.getLaboratoryEquipmentIdsWithReservations();
+  }
+
+  async findOne(
+    reservationLaboratoryEquipmentId: string,
+  ): Promise<FindOneReservationLaboratoryEquipmentResponseDto> {
+    return this.coreService.findOne(reservationLaboratoryEquipmentId);
   }
 }
