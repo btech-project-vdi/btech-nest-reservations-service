@@ -56,6 +56,8 @@ export class ReservationsNotificationService {
           startTime: rle.initialHour,
           endTime: rle.finalHour,
           metadata: rle.metadata,
+          reservationLaboratoryEquipmentId:
+            rle.reservationLaboratoryEquipmentId,
         };
       });
       await this.emailsClient.sendLabReservationEmail(
@@ -342,6 +344,8 @@ export class ReservationsNotificationService {
         equipmentDescription: equipmentData?.equipment?.description || 'Equipo',
         primaryColor: emailData.primaryColor || '#007bff',
         subscriptionDetailId: subscriptionDetailId,
+        reservationLaboratoryEquipmentId:
+          reservationEquipment.reservationLaboratoryEquipmentId,
       },
       {
         subscriberId,

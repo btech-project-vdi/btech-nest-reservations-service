@@ -22,6 +22,8 @@ export class SendLabReservationEmailDetailsDto {
   startTime: string;
   endTime: string;
   date: string;
+  metadata: Record<string, any>;
+  reservationLaboratoryEquipmentId: string;
 }
 
 export interface SendLabReservationEmailResponseDto {

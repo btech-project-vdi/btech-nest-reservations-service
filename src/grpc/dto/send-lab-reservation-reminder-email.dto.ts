@@ -18,4 +18,5 @@ export class SendLabReservationReminderEmailDto {
   primaryColor: string;
   subscriptionDetailId: string;
   grpcMetadata?: GrpcMetadataDto;
+  reservationLaboratoryEquipmentId: string;
 }

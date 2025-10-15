@@ -33,6 +33,7 @@ message ReservationDetail {
   string endTime = 4;
   string date = 5;
   ReservationMetadata metadata = 6;
+  string reservationLaboratoryEquipmentId = 7;
 }
 
 message SendLabReservationReminderEmailRequest {
@@ -49,6 +50,7 @@ message SendLabReservationReminderEmailRequest {
   string primaryColor = 11;
   string subscriptionDetailId = 12;
   optional GrpcMetadata grpcMetadata = 13;
+  string reservationLaboratoryEquipmentId = 14;
 }
 
 message ReservationMetadata {
