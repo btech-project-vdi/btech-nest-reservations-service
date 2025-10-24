@@ -45,6 +45,7 @@ export class CreateReservationDto {
 
 export class CreateReservationResponseDto {
   reservationId: string;
+  subscriptionDetailId: string;
   createdAt: string;
   subscriber: SubscriberInfoDto;
   metadata: Record<string, any>;

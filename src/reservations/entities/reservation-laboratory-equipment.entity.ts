@@ -30,6 +30,12 @@ export class ReservationLaboratoryEquipment extends Timestamped {
   })
   laboratoryEquipmentId: string;
 
+  @Column({
+    type: 'uuid',
+    nullable: true,
+  })
+  subscriptionDetailId: string;
+
   @OneToMany(
     () => ReservationProcessHistory,
     (reservationProcessHistory) =>

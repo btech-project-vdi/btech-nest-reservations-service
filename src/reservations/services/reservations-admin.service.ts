@@ -40,6 +40,7 @@ export class ReservationsAdminService {
     const {
       laboratoryEquipmentId,
       subscriberId,
+      subscriptionDetailId,
       reservationId,
       timePeriod,
       startDate,
@@ -56,11 +57,13 @@ export class ReservationsAdminService {
       .select([
         'reservation.reservationId',
         'reservation.subscriberId',
+        'reservation.subscriptionDetailId',
         'reservation.username',
         'reservation.metadata',
         'reservation.createdAt',
         'rle.reservationLaboratoryEquipmentId',
         'rle.laboratoryEquipmentId',
+        'rle.subscriptionDetailId',
         'rle.reservationDate',
         'rle.reservationFinalDate',
         'rle.initialHour',
@@ -81,6 +84,13 @@ export class ReservationsAdminService {
       queryBuilder.andWhere('reservation.subscriberId = :subscriberId', {
         subscriberId,
       });
+    if (subscriptionDetailId)
+      queryBuilder.andWhere(
+        'reservation.subscriptionDetailId = :subscriptionDetailId',
+        {
+          subscriptionDetailId,
+        },
+      );
     if (reservationId)
       queryBuilder.andWhere('reservation.reservationId = :reservationId', {
         reservationId,

@@ -30,6 +30,7 @@ export class ReservationLaboratoryEquipmentCoreService {
     createReservationDetailDto: CreateReservationDetailDto,
     informationSubscriber: InformationSubscriberDto,
     queryRunner?: QueryRunner,
+    subscriptionDetailId?: string,
   ): Promise<ReservationLaboratoryEquipment> {
     const [year, month, day] = createReservationDetailDto.initialDate
       .split('-')
@@ -73,14 +74,13 @@ export class ReservationLaboratoryEquipmentCoreService {
         finalHour: createReservationDetailDto.finalHour,
       },
     };
-
     const repository = queryRunner
       ? queryRunner.manager.getRepository(ReservationLaboratoryEquipment)
       : this.reservationLaboratoryEquipmentRepository;
-
     const reservationDetail = repository.create({
       metadata: completeMetadata,
       laboratoryEquipmentId: createReservationDetailDto.laboratoryEquipmentId,
+      subscriptionDetailId: subscriptionDetailId,
       reservationDate: reservationDate,
       initialHour: createReservationDetailDto.initialHour,
       reservationFinalDate: new Date(finalYear, finalMonth - 1, finalDay),

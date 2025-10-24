@@ -31,11 +31,13 @@ export class ReservationLaboratoryEquipmentService {
     createReservationDetailDto: CreateReservationDetailDto,
     informationSubscriber: InformationSubscriberDto,
     queryRunner?: QueryRunner,
+    subscriptionDetailId?: string,
   ): Promise<ReservationLaboratoryEquipment> {
     return this.coreService.create(
       createReservationDetailDto,
       informationSubscriber,
       queryRunner,
+      subscriptionDetailId,
     );
   }
 

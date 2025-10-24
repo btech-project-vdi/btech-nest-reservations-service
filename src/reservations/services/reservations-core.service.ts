@@ -80,8 +80,14 @@ export class ReservationsCoreService {
             user.subscriberId,
             user.username,
           ));
+
+        // DEBUG: Log para verificar user.subscription
+        console.log('🔍 DEBUG - user.subscription:', JSON.stringify(user.subscription, null, 2));
+        console.log('🔍 DEBUG - subscriptionDetailId:', user.subscription?.subscriptionDetailId);
+
         const reservation = queryRunner.manager.create(Reservation, {
           subscriberId: user.subscriberId,
+          subscriptionDetailId: user.subscription?.subscriptionDetailId,
           username: user.username,
           metadata: reservationMetadata,
           reservationLaboratoryEquipment: await Promise.all(
@@ -90,6 +96,7 @@ export class ReservationsCoreService {
                 detail,
                 informationSubscriber,
                 queryRunner,
+                user.subscription?.subscriptionDetailId,
               ),
             ),
           ),
@@ -129,11 +136,13 @@ export class ReservationsCoreService {
       .select([
         'reservation.reservationId',
         'reservation.subscriberId',
+        'reservation.subscriptionDetailId',
         'reservation.username',
         'reservation.metadata',
         'reservation.createdAt',
         'rle.reservationLaboratoryEquipmentId',
         'rle.laboratoryEquipmentId',
+        'rle.subscriptionDetailId',
         'rle.reservationDate',
         'rle.reservationFinalDate',
         'rle.initialHour',
@@ -144,6 +153,15 @@ export class ReservationsCoreService {
         subscriberId: user.subscriberId,
       })
       .orderBy('reservation.createdAt', 'DESC');
+
+    if (user.subscription?.subscriptionDetailId) {
+      queryBuilder.andWhere(
+        'reservation.subscriptionDetailId = :subscriptionDetailId',
+        {
+          subscriptionDetailId: user.subscription.subscriptionDetailId,
+        },
+      );
+    }
 
     if (status)
       queryBuilder.andWhere('rle.status IN (:...status)', {

@@ -6,6 +6,7 @@ export const formatReservationResponse = (
 ): CreateReservationResponseDto => {
   return {
     reservationId: reservation.reservationId,
+    subscriptionDetailId: reservation.subscriptionDetailId,
     createdAt: reservation.createdAt.toISOString(),
     subscriber: {
       subscriberId: reservation.subscriberId,
@@ -17,6 +18,7 @@ export const formatReservationResponse = (
         reservationLaboratoryEquipmentId:
           labEquipment.reservationLaboratoryEquipmentId,
         laboratoryEquipmentId: labEquipment.laboratoryEquipmentId,
+        subscriptionDetailId: labEquipment.subscriptionDetailId,
         reservationDate: labEquipment.reservationDate
           .toISOString()
           .split('T')[0],

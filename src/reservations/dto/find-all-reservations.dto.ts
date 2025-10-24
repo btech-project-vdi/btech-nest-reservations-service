@@ -29,6 +29,7 @@ export class FindAllReservationsDto extends PaginationDto {
 export class FindAllReservationsResponseDto {
   reservationId: string;
   subscriberId: string;
+  subscriptionDetailId: string;
   username: string;
   metadata: Record<string, any>;
   createdAt: string;

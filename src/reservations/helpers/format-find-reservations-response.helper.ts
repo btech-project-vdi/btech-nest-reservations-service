@@ -35,6 +35,7 @@ export const formatFindReservationsResponse = (
     return {
       reservationId: reservation.reservationId,
       subscriberId: reservation.subscriberId,
+      subscriptionDetailId: reservation.subscriptionDetailId,
       username: reservation.username,
       metadata: reservation.metadata,
       createdAt: reservation.createdAt.toISOString(),
@@ -64,6 +65,7 @@ export const formatFindReservationsResponse = (
                 equipment: equipment.equipment.description,
               } as LaboratoryEquipmentFindAllResponseDto)
             : ({} as LaboratoryEquipmentFindAllResponseDto),
+          subscriptionDetailId: rle.subscriptionDetailId,
           reservationDate: rle.reservationDate.toString(),
           reservationFinalDate: rle.reservationFinalDate.toString(),
           initialHour: rle.initialHour,

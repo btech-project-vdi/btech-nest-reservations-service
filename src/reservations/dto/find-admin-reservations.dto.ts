@@ -24,6 +24,10 @@ export class FindAdminReservationsDto extends PaginationDto {
   subscriberId?: string;
 
   @IsOptional()
+  @IsUUID('all', { message: 'subscriptionDetailId debe ser un UUID válido' })
+  subscriptionDetailId?: string;
+
+  @IsOptional()
   @IsUUID('all', { message: 'reservationId debe ser un UUID válido' })
   reservationId?: string;
 

@@ -3,6 +3,7 @@ import { StatusReservation } from '../enums/status-reservation.enum';
 export class ReservationDetailFindAllResponseDto {
   reservationLaboratoryEquipmentId: string;
   laboratoryEquipment: LaboratoryEquipmentFindAllResponseDto;
+  subscriptionDetailId: string;
   reservationDate: string;
   reservationFinalDate: string;
   initialHour: string;

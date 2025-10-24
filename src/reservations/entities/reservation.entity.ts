@@ -14,6 +14,12 @@ export class Reservation extends Timestamped {
   subscriberId: string;
 
   @Column({
+    type: 'uuid',
+    nullable: true,
+  })
+  subscriptionDetailId: string;
+
+  @Column({
     type: 'varchar',
     length: 65,
     nullable: true,

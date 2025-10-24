@@ -69,6 +69,7 @@ export class CreateReservationDetailDto {
 export class CreateReservationDetailResponseDto {
   reservationLaboratoryEquipmentId: string;
   laboratoryEquipmentId: string;
+  subscriptionDetailId: string;
   reservationDate: string;
   reservationFinalDate: string;
   initialHour: string;
