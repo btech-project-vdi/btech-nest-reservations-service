@@ -14,12 +14,14 @@ import { AdminLaboratoriesService } from 'src/common/services/admin-laboratories
 import { ReservationLaboratoryEquipmentService } from './reservation-laboratory-equipment.service';
 import { validateSelfOverlappingReservations } from '../helpers/validate-selft-overlapping-reservations.helper';
 import { validateUniqueEquipmentPerDayInRequest } from '../helpers/validate-unique-equipment-per-day-in-request.helper';
+import { ConcurrencyValidateService } from 'src/concurrency/services/concurrency-validate.service';
 
 @Injectable()
 export class ReservationsValidationService {
   constructor(
     private readonly adminLaboratoriesService: AdminLaboratoriesService,
     private readonly reservationLaboratoryEquipmentService: ReservationLaboratoryEquipmentService,
+    private readonly concurrencyValidateService: ConcurrencyValidateService,
   ) {}
 
   async validateReservationDetail(
@@ -67,6 +69,14 @@ export class ReservationsValidationService {
         validateHoursCallback,
       );
     }
+    // Validar límites de concurrencia
+    await this.concurrencyValidateService.validateConcurrency({
+      laboratoryEquipmentId: detail.laboratoryEquipmentId,
+      subscriptionDetailId: user.subscription?.subscriptionDetailId,
+      reservationDate: detail.initialDate.split('T')[0],
+      initialHour: detail.initialHour,
+      finalHour: detail.finalHour,
+    });
   }
 
   async validateConsecutiveDaysAvailability(

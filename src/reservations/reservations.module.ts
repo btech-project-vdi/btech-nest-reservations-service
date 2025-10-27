@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ReservationsController } from './reservations.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Reservation } from './entities/reservation.entity';
@@ -19,6 +19,7 @@ import { ReservationLaboratoryEquipmentService } from './services/reservation-la
 import { ReservationLaboratoryEquipmentCoreService } from './services/reservation-laboratory-equipment-core.service';
 import { ReservationLaboratoryEquipmentValidateService } from './services/reservation-laboratory-equipment-validate.service';
 import { ReservationLaboratoryEquipmentCustomService } from './services/reservation-laboratory-equipment-custom.service';
+import { ConcurrencyModule } from 'src/concurrency/concurrency.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ReservationLaboratoryEquipmentCustomService } from './services/reservat
     ]),
     CommonModule,
     GrpcModule,
+    forwardRef(() => ConcurrencyModule),
   ],
   controllers: [ReservationsController],
   providers: [
@@ -51,6 +53,7 @@ import { ReservationLaboratoryEquipmentCustomService } from './services/reservat
     ReservationProcessHistoryService,
     ReservationsNotificationService,
     ReservationLaboratoryEquipmentService,
+    ReservationsValidationService,
   ],
 })
 export class ReservationsModule {}
