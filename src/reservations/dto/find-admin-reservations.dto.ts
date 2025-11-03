@@ -12,6 +12,7 @@ import {
 import { Type } from 'class-transformer';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { TimePeriod } from '../enums/time-period.enum';
+import { DateFilterType } from '../enums/date-filter-type.enum';
 import { FindAllReservationsResponseDto } from './find-all-reservations.dto';
 
 export class FindAdminReservationsDto extends PaginationDto {
@@ -36,6 +37,12 @@ export class FindAdminReservationsDto extends PaginationDto {
     message: 'timePeriod debe ser un valor válido del enum TimePeriod',
   })
   timePeriod?: TimePeriod;
+
+  @IsOptional()
+  @IsEnum(DateFilterType, {
+    message: 'dateFilterType debe ser un valor válido del enum DateFilterType',
+  })
+  dateFilterType?: DateFilterType;
 
   // Campos requeridos solo cuando timePeriod es CUSTOM
   @ValidateIf((o) => o.timePeriod === TimePeriod.CUSTOM)

@@ -7,13 +7,13 @@ import {
   FindAdminReservationsResponseDto,
 } from '../dto/find-admin-reservations.dto';
 import { TimePeriod } from '../enums/time-period.enum';
+import { DateFilterType } from '../enums/date-filter-type.enum';
 import { Paginated } from 'src/common/dto/paginated.dto';
 import { paginateQueryBuilder } from 'src/common/helpers/paginate-query-builder.helper';
 import { formatFindReservationsResponse } from '../helpers/format-find-reservations-response.helper';
 import { AdminLaboratoriesService } from 'src/common/services/admin-laboratories.service';
 import { FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto } from 'src/common/dto/find-one-laboratory-equipment-by-laboratory-equipment-id';
 import { FindSubscribersListDto } from '../dto/find-subscribers-list.dto';
-import { SubscribersClient } from 'src/grpc/clients/subscribers.client';
 import { FindSubscribersWithNaturalPersonsResponseDto } from 'src/grpc/dto/find-subscribers-with-natural-persons.dto';
 import {
   FindAvailableLaboratoriesEquipmentsForUserDto,
@@ -30,7 +30,6 @@ export class ReservationsAdminService {
     @InjectRepository(Reservation)
     private readonly reservationRepository: Repository<Reservation>,
     private readonly adminLaboratoriesService: AdminLaboratoriesService,
-    private readonly subscribersClient: SubscribersClient,
     private readonly reservationLaboratoryEquipmentService: ReservationLaboratoryEquipmentService,
   ) {}
 
@@ -43,6 +42,7 @@ export class ReservationsAdminService {
       subscriptionDetailId,
       reservationId,
       timePeriod,
+      dateFilterType,
       startDate,
       endDate,
       startTime,
@@ -95,7 +95,13 @@ export class ReservationsAdminService {
       queryBuilder.andWhere('reservation.reservationId = :reservationId', {
         reservationId,
       });
-    this.applyTimePeriodFilter(queryBuilder, timePeriod, startDate, endDate);
+    this.applyTimePeriodFilter(
+      queryBuilder,
+      timePeriod,
+      startDate,
+      endDate,
+      dateFilterType,
+    );
     if (startTime || endTime)
       this.applyTimeFilter(queryBuilder, startTime, endTime);
     const paginatedReservations = await paginateQueryBuilder(
@@ -133,6 +139,7 @@ export class ReservationsAdminService {
     timePeriod?: TimePeriod,
     startDate?: string,
     endDate?: string,
+    dateFilterType?: DateFilterType,
   ): void {
     if (!timePeriod) return;
 
@@ -142,14 +149,28 @@ export class ReservationsAdminService {
       endDate,
     );
 
-    if (fromDate && toDate)
-      queryBuilder.andWhere(
-        'rle.reservationDate BETWEEN :fromDate AND :toDate',
-        {
-          fromDate: fromDate.toISOString().split('T')[0],
-          toDate: toDate.toISOString().split('T')[0],
-        },
-      );
+    if (fromDate && toDate) {
+      const filterType =
+        dateFilterType || DateFilterType.RESERVATION_START_DATE;
+      if (filterType === DateFilterType.CREATION_DATE)
+        // Filtrar por fecha de creación de la reserva
+        queryBuilder.andWhere(
+          'DATE(reservation.createdAt) BETWEEN :fromDate AND :toDate',
+          {
+            fromDate: fromDate.toISOString().split('T')[0],
+            toDate: toDate.toISOString().split('T')[0],
+          },
+        );
+      else
+        // Filtrar por fecha de inicio del item (comportamiento por defecto)
+        queryBuilder.andWhere(
+          'rle.reservationDate BETWEEN :fromDate AND :toDate',
+          {
+            fromDate: fromDate.toISOString().split('T')[0],
+            toDate: toDate.toISOString().split('T')[0],
+          },
+        );
+    }
   }
 
   private applyTimeFilter(
@@ -195,16 +216,39 @@ export class ReservationsAdminService {
       .groupBy('r.subscriberId');
 
     if (term?.trim()) {
-      const searchTerm = `%${term.trim()}%`;
-      subQuery.andWhere(
-        `(r.username LIKE :searchTerm OR
-        JSON_EXTRACT(r.metadata, '$.naturalPerson.fullName') LIKE :searchTerm OR
-        JSON_EXTRACT(r.metadata, '$.naturalPerson.paternalSurname') LIKE :searchTerm OR
-        JSON_EXTRACT(r.metadata, '$.naturalPerson.maternalSurname') LIKE :searchTerm OR
-        JSON_EXTRACT(r.metadata, '$.naturalPerson.documentNumber') LIKE :searchTerm OR
-        JSON_EXTRACT(r.metadata, '$.naturalPerson.email') LIKE :searchTerm)`,
-        { searchTerm },
-      );
+      const trimmedTerm = term.trim();
+      const searchPattern = `%${trimmedTerm.toLowerCase()}%`;
+
+      // Para nombres (fullName, paternalSurname, maternalSurname): búsqueda flexible por palabras en cualquier orden
+      const words = trimmedTerm.split(/\s+/);
+      const nameConditions = words
+        .map(
+          (_, index) =>
+            `(LOWER(JSON_EXTRACT(r.metadata, '$.naturalPerson.fullName')) LIKE :nameWord${index} OR
+            LOWER(JSON_EXTRACT(r.metadata, '$.naturalPerson.paternalSurname')) LIKE :nameWord${index} OR
+            LOWER(JSON_EXTRACT(r.metadata, '$.naturalPerson.maternalSurname')) LIKE :nameWord${index})`,
+        )
+        .join(' AND ');
+
+      const parameters: Record<string, string> = {};
+      words.forEach((word, index) => {
+        parameters[`nameWord${index}`] = `%${word.toLowerCase()}%`;
+      });
+      parameters['searchPattern'] = searchPattern;
+
+      // Para otros campos: búsqueda directa case-insensitive
+      const directSearchConditions = `(
+        LOWER(r.username) LIKE :searchPattern OR
+        LOWER(JSON_EXTRACT(r.metadata, '$.naturalPerson.documentType')) LIKE :searchPattern OR
+        LOWER(JSON_EXTRACT(r.metadata, '$.naturalPerson.documentNumber')) LIKE :searchPattern OR
+        LOWER(JSON_EXTRACT(r.metadata, '$."Codigo de usuario"')) LIKE :searchPattern OR
+        LOWER(JSON_SEARCH(r.metadata, 'one', :searchPattern, NULL, '$.naturalPerson.personInformation[*].description')) IS NOT NULL
+      )`;
+
+      // Combinar ambas condiciones: nombres flexibles O búsqueda directa
+      const fullCondition = `((${nameConditions}) OR ${directSearchConditions})`;
+
+      subQuery.andWhere(fullCondition, parameters);
     }
 
     const subscriberIdsSubQuery = `(${subQuery.getQuery()})`;
