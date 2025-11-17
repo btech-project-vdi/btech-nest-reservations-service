@@ -1,19 +1,21 @@
 import { Module } from '@nestjs/common';
-import { ReservationsModule } from './reservations/reservations.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfig } from './config/typeorm.config';
-import { MessagingModule } from './messaging/messaging.module';
-import { SystemsModule } from './systems/systems.module';
 import { SchedulersModule } from './schedulers/schedulers.module';
 import { ConcurrencyModule } from './concurrency/concurrency.module';
+import { ReservationProcessHistoryModule } from './reservation-process-history/reservation-process-history.module';
+import { ReservationLaboratoryEquipmentModule } from './reservation-laboratory-equipment/reservation-laboratory-equipment.module';
+import { ReservationModule } from './reservation/reservation.module';
+import { CommunicationsModule } from './communications/communications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(typeOrmConfig),
-    ReservationsModule,
     ConcurrencyModule,
-    MessagingModule.register(),
-    SystemsModule,
+    ReservationProcessHistoryModule,
+    ReservationLaboratoryEquipmentModule,
+    ReservationModule,
+    CommunicationsModule,
     SchedulersModule,
   ],
   controllers: [],

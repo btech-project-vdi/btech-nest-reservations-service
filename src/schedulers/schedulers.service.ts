@@ -60,10 +60,7 @@ export class SchedulersService {
       },
     };
     const result = await this.sendReservationRemindersJob.execute(context);
-    this.jobLogger.logExecution(
-      this.sendReservationRemindersJob.name,
-      result,
-    );
+    this.jobLogger.logExecution(this.sendReservationRemindersJob.name, result);
   }
 
   async executeJobManually(jobName: string): Promise<any> {

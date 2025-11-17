@@ -1,15 +1,14 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConcurrencyController } from './concurrency.controller';
-import { ConcurrencyService } from './services/concurrency.service';
-import { ConcurrencyValidateService } from './services/concurrency-validate.service';
-import { ConcurrencyCustomService } from './services/concurrency-custom.service';
 import { Concurrency } from './entities/concurrency.entity';
 import { ConcurrencyEquipment } from './entities/concurrency-equipment.entity';
 import { ConcurrencyTimeSlot } from './entities/concurrency-time-slot.entity';
 import { ConcurrencyLimit } from './entities/concurrency-limit.entity';
-import { ReservationLaboratoryEquipment } from 'src/reservations/entities/reservation-laboratory-equipment.entity';
-import { ReservationsModule } from 'src/reservations/reservations.module';
+import { CONCURRENCY_CUSTOM_SERVICES } from './services/custom';
+import { CONCURRENCY_VALIDATION_SERVICES } from './services/validation';
+import { CONCURRENCY_CONTROLLERS } from './controllers';
+import { ReservationLaboratoryEquipment } from 'src/reservation-laboratory-equipment/entities/reservation-laboratory-equipment.entity';
+import { ReservationModule } from 'src/reservation/reservation.module';
 
 @Module({
   imports: [
@@ -20,18 +19,13 @@ import { ReservationsModule } from 'src/reservations/reservations.module';
       ConcurrencyLimit,
       ReservationLaboratoryEquipment,
     ]),
-    forwardRef(() => ReservationsModule),
+    forwardRef(() => ReservationModule),
   ],
-  controllers: [ConcurrencyController],
+  controllers: [...CONCURRENCY_CONTROLLERS],
   providers: [
-    ConcurrencyService,
-    ConcurrencyValidateService,
-    ConcurrencyCustomService,
+    ...CONCURRENCY_CUSTOM_SERVICES,
+    ...CONCURRENCY_VALIDATION_SERVICES,
   ],
-  exports: [
-    ConcurrencyService,
-    ConcurrencyValidateService,
-    ConcurrencyCustomService,
-  ],
+  exports: [...CONCURRENCY_CUSTOM_SERVICES, ...CONCURRENCY_VALIDATION_SERVICES],
 })
 export class ConcurrencyModule {}

@@ -7,7 +7,7 @@ import {
 } from '../interfaces/schedulable-job.interface';
 import { JobExecutionResultDto } from '../dto/job-execution-result.dto';
 import { JobStatus } from '../enums/job-status.enum';
-import { ReservationsNotificationService } from '../../reservations/services/reservations-notification.service';
+import { ReservationNotificationService } from 'src/reservation/services/notification';
 
 @Injectable()
 export class SendReservationRemindersJob implements SchedulableJob {
@@ -16,7 +16,7 @@ export class SendReservationRemindersJob implements SchedulableJob {
     'Envía recordatorios por email a usuarios con reservas próximas';
 
   constructor(
-    private readonly reservationsNotificationService: ReservationsNotificationService,
+    private readonly reservationNotificationService: ReservationNotificationService,
   ) {}
 
   async execute(context: JobContext): Promise<JobExecutionResultDto> {
@@ -24,7 +24,7 @@ export class SendReservationRemindersJob implements SchedulableJob {
 
     try {
       const result =
-        await this.reservationsNotificationService.sendReservationReminders(
+        await this.reservationNotificationService.sendReservationReminders(
           context.timestamp,
         );
       return {

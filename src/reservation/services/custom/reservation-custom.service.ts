@@ -1,0 +1,61 @@
+import { Injectable } from '@nestjs/common';
+import { Paginated } from 'src/common/dto/paginated.dto';
+import { FindSubscribersWithNaturalPersonsResponseDto } from 'src/communications/grpc/dto/find-subscribers-with-natural-persons.dto';
+import {
+  FindAvailableLaboratoriesEquipmentsForUserDto,
+  FindAvailableLaboratoriesEquipmentsForUserResponseDto,
+} from 'src/common/dto/find-available-laboratories-equipments-for-user.dto';
+import { ReservationFindAdminReservationsService } from './reservation-find-admin-reservations.service';
+import { ReservationFindSubscribersListService } from './reservation-find-subscribers-list.service';
+import { ReservationFindAvailableLabsWithReservationsService } from './reservation-find-available-labs-with-reservations.service';
+import {
+  FindAdminReservationsDto,
+  FindAdminReservationsResponseDto,
+} from 'src/reservation/dto/find-admin-reservations.dto';
+import { FindSubscribersListDto } from 'src/reservation/dto/find-subscribers-list.dto';
+import { FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto } from 'src/common/dto/find-one-laboratory-equipment-by-laboratory-equipment-id';
+import { ReservationFindEquipmentMapService } from './reservation-find-equipment-map.service';
+
+@Injectable()
+export class ReservationCustomService {
+  constructor(
+    private readonly reservationFindAdminReservationsService: ReservationFindAdminReservationsService,
+    private readonly reservationFindSubscribersListService: ReservationFindSubscribersListService,
+    private readonly reservationFindAvailableLabsWithReservationsService: ReservationFindAvailableLabsWithReservationsService,
+    private readonly reservationFindEquipmentMapService: ReservationFindEquipmentMapService,
+  ) {}
+
+  async findAdminReservations(
+    findAdminReservationsDto: FindAdminReservationsDto,
+  ): Promise<Paginated<FindAdminReservationsResponseDto>> {
+    return await this.reservationFindAdminReservationsService.execute(
+      findAdminReservationsDto,
+    );
+  }
+
+  async findSubscribersList(
+    findSubscribersListDto: FindSubscribersListDto,
+  ): Promise<FindSubscribersWithNaturalPersonsResponseDto> {
+    return await this.reservationFindSubscribersListService.execute(
+      findSubscribersListDto,
+    );
+  }
+
+  async findAvailableLaboratoriesEquipmentsForUserWithReservations(
+    findAvailableLaboratoriesEquipmentsForUserDto: FindAvailableLaboratoriesEquipmentsForUserDto,
+  ): Promise<Paginated<FindAvailableLaboratoriesEquipmentsForUserResponseDto>> {
+    return await this.reservationFindAvailableLabsWithReservationsService.execute(
+      findAvailableLaboratoriesEquipmentsForUserDto,
+    );
+  }
+
+  async findEquipmentMapData(
+    laboratoryEquipmentIds: string[],
+  ): Promise<
+    Map<string, FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto>
+  > {
+    return await this.reservationFindEquipmentMapService.execute(
+      laboratoryEquipmentIds,
+    );
+  }
+}

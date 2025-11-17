@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { MessagingService } from 'src/messaging/messaging.service';
 import {
   FindAvailableProgrammingHoursDto,
   FindAvailableProgrammingHoursResponseDto,
 } from '../dto/find-available-programming-hours.dto';
 import { FindDaysWithDetailsDto } from '../dto/find-days-with-details.dto';
+import { NatsService } from 'src/communications/nats';
 
 @Injectable()
 export class AdminProgrammingService {
-  constructor(private readonly client: MessagingService) {}
+  constructor(private readonly client: NatsService) {}
   async findAvailableProgrammingHours(
     findAvailableProgrammingHoursDto: FindAvailableProgrammingHoursDto,
   ): Promise<FindAvailableProgrammingHoursResponseDto[]> {
     return await this.client.send(
-      'programming.findAvailableProgrammingHours',
+      'programmingHours.findAvailableProgrammingHours',
       findAvailableProgrammingHoursDto,
     );
   }
@@ -22,7 +22,7 @@ export class AdminProgrammingService {
     programmingSubscriptionDetailId: string,
   ): Promise<FindDaysWithDetailsDto[]> {
     return await this.client.send(
-      'programming.findProgrammingDaysWithDetails',
+      'programmingDay.findProgrammingDaysWithDetails',
       {
         programmingSubscriptionDetailId,
       },

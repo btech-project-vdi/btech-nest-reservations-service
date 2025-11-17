@@ -1,4 +1,4 @@
-export const MESSAGING_SERVICE = 'MESSAGING_SERVICE';
+export const NATS_SERVICE = 'NATS_SERVICE';
 export const EMAILS_SERVICE = 'EMAILS_SERVICE';
 export const SERVICE_NAME = 'reservations-service';
 export const ADMIN_SUBSCRIPTIONS_SERVICE = 'ADMIN_SUBSCRIPTIONS_SERVICE';

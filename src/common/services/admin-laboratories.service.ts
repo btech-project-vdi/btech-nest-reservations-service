@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { MessagingService } from 'src/messaging/messaging.service';
 import { FindOneByLaboratoryEquipmentIdResponseDto } from '../dto/find-one-by-laboratory-equipment-id.dto';
 import { FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto } from '../dto/find-one-laboratory-equipment-by-laboratory-equipment-id';
 import { FindLaboratoriesByLaboratoriesSubscriptionDetailIdsResponseDto } from '../dto/find-laboratories-by-laboratories-subscription-detail-ids.dto';
@@ -8,10 +7,11 @@ import {
   FindAvailableLaboratoriesEquipmentsForUserResponseDto,
 } from '../dto/find-available-laboratories-equipments-for-user.dto';
 import { Paginated } from '../dto/paginated.dto';
+import { NatsService } from 'src/communications/nats';
 
 @Injectable()
 export class AdminLaboratoriesService {
-  constructor(private readonly client: MessagingService) {}
+  constructor(private readonly client: NatsService) {}
   async findOneByLaboratoryEquipmentId(
     laboratoryEquipmentId: string,
   ): Promise<FindOneByLaboratoryEquipmentIdResponseDto> {
@@ -36,7 +36,7 @@ export class AdminLaboratoriesService {
     laboratoriesSubscriptionDetailsIds: string[],
   ): Promise<FindLaboratoriesByLaboratoriesSubscriptionDetailIdsResponseDto[]> {
     return await this.client.send(
-      'laboratories.findByLaboratoriesSubscriptionDetailsIds',
+      'laboratoryEquipment.findByLaboratoriesSubscriptionDetailsIds',
       {
         laboratoriesSubscriptionDetailsIds,
       },
@@ -65,7 +65,7 @@ export class AdminLaboratoriesService {
     findAvailableLaboratoriesEquipmentsForUserDto: FindAvailableLaboratoriesEquipmentsForUserDto,
   ): Promise<Paginated<FindAvailableLaboratoriesEquipmentsForUserResponseDto>> {
     return await this.client.send(
-      'laboratories.findAvailableLaboratoriesEquipmentsForUser',
+      'laboratoryEquipment.findAvailableLaboratoriesEquipmentsForUser',
       findAvailableLaboratoriesEquipmentsForUserDto,
     );
   }
