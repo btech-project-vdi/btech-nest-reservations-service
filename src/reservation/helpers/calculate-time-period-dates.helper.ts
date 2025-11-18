@@ -1,4 +1,5 @@
 import { TimePeriod } from '../enums/time-period.enum';
+import { getCurrentDateInTimezone } from 'src/schedulers/helpers/timezone.helper';
 
 export interface TimePeriodDates {
   fromDate?: Date;
@@ -12,7 +13,7 @@ export const calculateTimePeriodDates = (
 ): TimePeriodDates => {
   if (!timePeriod) return {};
 
-  const now = new Date();
+  const now = getCurrentDateInTimezone('America/Lima');
   let fromDate: Date | undefined;
   let toDate: Date = now;
 

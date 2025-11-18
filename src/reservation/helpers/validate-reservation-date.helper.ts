@@ -1,8 +1,9 @@
 import { HttpStatus } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
+import { getCurrentDateInTimezone } from 'src/schedulers/helpers/timezone.helper';
 
 export const validateReservationDate = (date: string, index?: number) => {
-  const today = new Date();
+  const today = getCurrentDateInTimezone('America/Lima');
   const reservationDate = new Date(date + 'T00:00:00');
 
   const todayStr = today.toISOString().split('T')[0];
