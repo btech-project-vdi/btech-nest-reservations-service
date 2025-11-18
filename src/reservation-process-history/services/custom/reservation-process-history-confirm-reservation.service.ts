@@ -4,6 +4,7 @@ import { ReservationProcessHistoryCoreService } from '../core/reservation-proces
 import { ReservationLaboratoryEquipmentCoreService } from 'src/reservation-laboratory-equipment/services/core';
 import { StatusReservation } from 'src/reservation/enums/status-reservation.enum';
 import { StatusResponse } from 'src/reservation-process-history/enums/status-response.enum';
+import { getCurrentDateInTimezone } from 'src/schedulers/helpers/timezone.helper';
 
 @Injectable()
 export class ReservationProcessHistoryConfirmReservationService {
@@ -33,7 +34,8 @@ export class ReservationProcessHistoryConfirmReservationService {
       statusCode: statusCode ?? 200,
       metadata: metadata ?? {
         Acción: 'Confirmar Reserva',
-        'Fecha de ejecución': new Date().toISOString(),
+        'Fecha de ejecución':
+          getCurrentDateInTimezone('America/Lima').toISOString(),
       },
     };
 

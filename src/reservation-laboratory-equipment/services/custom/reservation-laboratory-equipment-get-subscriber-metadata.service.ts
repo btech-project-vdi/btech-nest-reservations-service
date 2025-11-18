@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SubscribersClient } from 'src/communications/grpc/clients/subscribers.client';
+import { getCurrentDateInTimezone } from 'src/schedulers/helpers/timezone.helper';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentGetSubscriberMetadataService {
@@ -20,7 +21,8 @@ export class ReservationLaboratoryEquipmentGetSubscriberMetadataService {
         // Si no se encuentra información, devolver metadata básica
         return {
           'Codigo de usuario': username,
-          'Fecha de creación': new Date().toISOString(),
+          'Fecha de creación':
+            getCurrentDateInTimezone('America/Lima').toISOString(),
         };
       const naturalPerson = userProfile.naturalPerson;
       // Formatear la metadata según la estructura requerida
@@ -38,7 +40,8 @@ export class ReservationLaboratoryEquipmentGetSubscriberMetadataService {
           })),
         },
         'Codigo de usuario': username,
-        'Fecha de creación': new Date().toISOString(),
+        'Fecha de creación':
+          getCurrentDateInTimezone('America/Lima').toISOString(),
       };
       return metadata;
     } catch (error) {
@@ -49,7 +52,8 @@ export class ReservationLaboratoryEquipmentGetSubscriberMetadataService {
       );
       return {
         'Codigo de usuario': username,
-        'Fecha de creación': new Date().toISOString(),
+        'Fecha de creación':
+          getCurrentDateInTimezone('America/Lima').toISOString(),
       };
     }
   }
