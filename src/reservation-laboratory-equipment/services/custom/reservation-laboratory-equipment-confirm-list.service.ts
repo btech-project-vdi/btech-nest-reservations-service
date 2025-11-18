@@ -5,7 +5,6 @@ import { ReservationLaboratoryEquipment } from '../../entities/reservation-labor
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { paginate } from 'src/common/helpers/paginate.helper';
 import { Paginated } from 'src/common/dto/paginated.dto';
-import { ReservationCoreService } from 'src/reservation/services/core';
 import { formatConfirmListReservationResponse } from 'src/reservation-laboratory-equipment/helpers/format-confirm-list-reservation-response.helper';
 import { ReservationCustomService } from 'src/reservation/services/custom';
 import { ConfirmListReservationResponseDto } from 'src/reservation-process-history/dto/confirm-list-reservation.dto';
@@ -16,7 +15,7 @@ export class ReservationLaboratoryEquipmentConfirmListService {
   constructor(
     @InjectRepository(ReservationLaboratoryEquipment)
     private readonly reservationLaboratoryEquipmentRepository: Repository<ReservationLaboratoryEquipment>,
-    @Inject(forwardRef(() => ReservationCoreService))
+    @Inject(forwardRef(() => ReservationCustomService))
     private readonly reservationCustomService: ReservationCustomService,
   ) {}
 
