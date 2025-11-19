@@ -49,6 +49,7 @@ export class ReservationLaboratoryEquipmentUpdateStatusService {
         reservationLaboratoryEquipmentId,
         reservationLaboratoryEquipment.metadata as EmailNotificationMetadataDto,
         subscriptionDetailId,
+        reservationLaboratoryEquipment.reservation.reservationId,
         reservationLaboratoryEquipment.reservation?.subscriberId,
         user,
         requestMetadata,

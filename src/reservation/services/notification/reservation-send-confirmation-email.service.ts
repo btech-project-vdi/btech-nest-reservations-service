@@ -55,6 +55,7 @@ export class ReservationSendConfirmationEmailService {
           details,
           primaryColor: informationSubscriber.primaryColor,
           subscriptionDetailId,
+          reservationId: reservation.reservationId,
         },
         {
           ipAddress: requestMetadata?.ipAddress,

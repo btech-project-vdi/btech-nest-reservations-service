@@ -28,6 +28,7 @@ export class SendLabEquipmentReservationCancellationEmailDto {
   metadata: EmailNotificationMetadataDto;
   subscriptionDetailId: string;
   grpcMetadata?: GrpcMetadataDto;
+  reservationId: string;
 }
 
 export class SendLabEquipmentReservationCancellationEmailResponseDto {

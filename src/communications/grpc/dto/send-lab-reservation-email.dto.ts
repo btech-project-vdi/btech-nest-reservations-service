@@ -14,6 +14,7 @@ export class SendLabReservationEmailDto {
   primaryColor: string;
   subscriptionDetailId: string;
   grpcMetadata?: GrpcMetadataDto;
+  reservationId: string;
 }
 
 export class SendLabReservationEmailDetailsDto {

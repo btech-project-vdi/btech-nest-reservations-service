@@ -16,6 +16,7 @@ export class ReservationSendCancellationEmailService {
     reservationLaboratoryEquipmentId: string,
     metadata: EmailNotificationMetadataDto,
     subscriptionDetailId: string,
+    reservationId: string,
     subscriberId?: string,
     user?: SessionUserDataDto,
     requestMetadata?: RequestMetadataDto,
@@ -26,6 +27,7 @@ export class ReservationSendCancellationEmailService {
           reservationLaboratoryEquipmentId,
           metadata,
           subscriptionDetailId,
+          reservationId,
         },
         {
           ipAddress: requestMetadata?.ipAddress,

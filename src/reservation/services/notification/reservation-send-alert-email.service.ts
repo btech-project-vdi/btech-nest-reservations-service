@@ -60,6 +60,7 @@ export class ReservationSendAlertEmailService {
         subscriptionDetailId: subscriptionDetailId,
         reservationLaboratoryEquipmentId:
           reservationEquipment.reservationLaboratoryEquipmentId,
+        reservationId: reservationEquipment.reservation.reservationId,
       },
       {
         subscriberId,
