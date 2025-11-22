@@ -23,8 +23,6 @@ interface EnvsVars {
   DB_SYNCHRONIZE: boolean;
   EMAILS_GRPC_URL: string;
   SUBSCRIBERS_GRPC_URL: string;
-  ENCRYPTION_KEY: string;
-  ENCRYPTION_ENABLED: boolean;
 }
 
 const envsSchema = joi
@@ -38,8 +36,6 @@ const envsSchema = joi
     DB_SYNCHRONIZE: joi.boolean().default(true),
     EMAILS_GRPC_URL: joi.string().required(),
     SUBSCRIBERS_GRPC_URL: joi.string().required(),
-    ENCRYPTION_KEY: joi.string().required(),
-    ENCRYPTION_ENABLED: joi.boolean().required(),
     NATS_SERVERS: joi.array().items(joi.string()).required(),
   })
   .unknown(true);
@@ -72,9 +68,5 @@ export const envs = {
   },
   messaging: {
     servers: envVars.NATS_SERVERS,
-  },
-  encryption: {
-    key: envVars.ENCRYPTION_KEY,
-    enabled: envVars.ENCRYPTION_ENABLED,
   },
 };
