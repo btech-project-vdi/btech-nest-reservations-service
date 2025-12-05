@@ -1,17 +1,11 @@
-import {
-  IsDateString,
-  IsEnum,
-  IsNotEmpty,
-  IsString,
-  IsUUID,
-} from 'class-validator';
+import { IsDateString, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { NamesDay } from '../enums/names-day.enum';
 
 export class FindAvailableProgrammingHoursDto {
   @IsNotEmpty({
     message: 'Los IDs de laboratorio de detalle de suscripción son requeridos',
   })
-  @IsUUID('all', {
+  @IsString({
     each: true,
     message:
       'Cada ID de laboratorio de detalle de suscripción debe ser un UUID válido',

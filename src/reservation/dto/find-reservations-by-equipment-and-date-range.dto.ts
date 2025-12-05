@@ -1,8 +1,8 @@
-import { IsDateString, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
 import { StatusReservation } from '../enums/status-reservation.enum';
 
 export class FindReservationsByEquipmentAndDateRangeDto {
-  @IsUUID('all', {
+  @IsString({
     message: 'El campo laboratoryEquipmentId debe ser un UUID',
   })
   @IsNotEmpty({

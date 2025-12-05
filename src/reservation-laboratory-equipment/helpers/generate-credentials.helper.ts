@@ -32,10 +32,10 @@ export const generateCredentials = (
   // Determinar qué contraseña usar según la hora de la reserva
   const passwordKey = getPasswordKeyByTime(reservationHour);
   let password = equipmentCredentials[passwordKey] as string;
-  // Si no existe la credencial para ese turno, usar fallback a 'night' (por defecto)
+  // Si no existe la credencial para ese turno, usar fallback a 'night1' (por defecto)
   if (!password) {
-    password = equipmentCredentials.night as string;
-    // Si tampoco existe 'night', lanzar error
+    password = equipmentCredentials.night1 as string;
+    // Si tampoco existe 'night1', lanzar error
     if (!password)
       throw new RpcException({
         status: HttpStatus.BAD_REQUEST,
