@@ -17,7 +17,7 @@ import { FindAllReservationsResponseDto } from './find-all-reservations.dto';
 
 export class FindAdminReservationsDto extends PaginationDto {
   @IsOptional()
-  @IsUUID('all', { message: 'laboratoryEquipmentId debe ser un UUID válido' })
+  @IsString({ message: 'laboratoryEquipmentId debe ser un UUID válido' })
   laboratoryEquipmentId?: string;
 
   @IsOptional()
