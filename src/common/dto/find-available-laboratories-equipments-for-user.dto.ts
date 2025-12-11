@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { PaginationDto } from './pagination.dto';
 
 export class FindAvailableLaboratoriesEquipmentsForUserDto extends PaginationDto {
@@ -8,7 +8,7 @@ export class FindAvailableLaboratoriesEquipmentsForUserDto extends PaginationDto
   @IsOptional()
   searchTerm?: string;
 
-  @IsString({ message: 'subscriberId debe ser una cadena de texto' })
+  @IsUUID('all', { message: 'subscriberId debe ser un UUID válido' })
   subscriberId: string;
 }
 
