@@ -25,9 +25,11 @@ export class ReservationLaboratoryEquipmentGetReservationCountsService {
   ): Promise<Map<string, number>> {
     const queryBuilder = this.reservationLaboratoryEquipmentRepository
       .createQueryBuilder('rle')
+      .leftJoin('rle.reservation', 'reservation')
       .select('rle.laboratoryEquipmentId', 'laboratoryEquipmentId')
       .addSelect('COUNT(rle.reservationLaboratoryEquipmentId)', 'count')
       .groupBy('rle.laboratoryEquipmentId');
+
     // Aplicar filtros de fecha
     applyTimePeriodFilterRle(
       queryBuilder,
@@ -36,14 +38,19 @@ export class ReservationLaboratoryEquipmentGetReservationCountsService {
       endDate,
       dateFilterType,
     );
-    if (startTime || endTime)
+
+    if (startTime || endTime) {
       applyTimeFilterRle(queryBuilder, startTime, endTime);
+    }
+
     const counts =
       await queryBuilder.getRawMany<ReservationCountByEquipmentDto>();
+
     const countMap = new Map<string, number>();
     counts.forEach((item) => {
       countMap.set(item.laboratoryEquipmentId, parseInt(String(item.count)));
     });
+
     return countMap;
   }
 }
