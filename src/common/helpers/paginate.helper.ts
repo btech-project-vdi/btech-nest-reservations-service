@@ -1,10 +1,9 @@
-import { Paginated } from '../dto/paginated.dto';
-import { PaginationDto } from '../dto/pagination.dto';
+import { PaginationDto, PaginationResponseDto } from '../dto/pagination.dto';
 
 export const paginate = async <T>(
   data: T[],
   paginationDto: PaginationDto,
-): Promise<Paginated<T>> => {
+): Promise<PaginationResponseDto<T>> => {
   const { page = 1, limit = 8 } = paginationDto;
   const start = (page - 1) * limit;
   const end = start + limit;

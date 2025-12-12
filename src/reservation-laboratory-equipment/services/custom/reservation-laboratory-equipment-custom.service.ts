@@ -1,6 +1,8 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { Paginated } from 'src/common/dto/paginated.dto';
+import {
+  PaginationDto,
+  PaginationResponseDto,
+} from 'src/common/dto/pagination.dto';
 import { ReservationLaboratoryEquipment } from '../../entities/reservation-laboratory-equipment.entity';
 import { ReservationLaboratoryEquipmentConfirmListService } from './reservation-laboratory-equipment-confirm-list.service';
 import { ReservationLaboratoryEquipmentFindForReminderService } from './reservation-laboratory-equipment-find-for-reminder.service';
@@ -8,9 +10,19 @@ import { ReservationLaboratoryEquipmentCompleteFinishedService } from './reserva
 import { ReservationLaboratoryEquipmentGetEquipmentIdsService } from './reservation-laboratory-equipment-get-equipment-ids.service';
 import { ReservationLaboratoryEquipmentGetSubscriberMetadataService } from './reservation-laboratory-equipment-get-subscriber-metadata.service';
 import { ReservationLaboratoryEquipmentGetSubscriberProfileService } from './reservation-laboratory-equipment-get-subscriber-profile.service';
+import { ReservationLaboratoryEquipmentFindAdminDetailsService } from './reservation-laboratory-equipment-find-admin-details.service';
 import { StatusReservation } from 'src/reservation/enums/status-reservation.enum';
 import { CompleteFinishedReservationsResponseDto } from 'src/reservation/dto/complete-finished-reservations.dto';
 import { ConfirmListReservationResponseDto } from 'src/reservation-process-history/dto/confirm-list-reservation.dto';
+import {
+  FindAdminReservationDetailsDto,
+  FindAdminReservationDetailsResponseDto,
+} from '../../dto/find-admin-reservation-details.dto';
+import {
+  FindLaboratoriesWithReservationsDto,
+  FindLaboratoriesWithReservationsResponseDto,
+} from '../../dto/find-laboratories-with-reservations.dto';
+import { ReservationLaboratoryEquipmentFindLaboratoriesWithReservationsService } from './reservation-laboratory-equipment-find-laboratories.service';
 
 @Injectable()
 export class ReservationLaboratoryEquipmentCustomService {
@@ -22,12 +34,14 @@ export class ReservationLaboratoryEquipmentCustomService {
     private readonly reservationLaboratoryEquipmentGetEquipmentIdsService: ReservationLaboratoryEquipmentGetEquipmentIdsService,
     private readonly reservationLaboratoryEquipmentGetSubscriberMetadataService: ReservationLaboratoryEquipmentGetSubscriberMetadataService,
     private readonly reservationLaboratoryEquipmentGetSubscriberProfileService: ReservationLaboratoryEquipmentGetSubscriberProfileService,
+    private readonly reservationLaboratoryEquipmentFindAdminDetailsService: ReservationLaboratoryEquipmentFindAdminDetailsService,
+    private readonly reservationLaboratoryEquipmentFindLaboratoriesWithReservationsService: ReservationLaboratoryEquipmentFindLaboratoriesWithReservationsService,
   ) {}
 
   async confirmListReservation(
     paginationDto: PaginationDto,
     status: StatusReservation | undefined,
-  ): Promise<Paginated<ConfirmListReservationResponseDto>> {
+  ): Promise<PaginationResponseDto<ConfirmListReservationResponseDto>> {
     return await this.reservationLaboratoryEquipmentConfirmListService.execute(
       paginationDto,
       status,
@@ -67,6 +81,24 @@ export class ReservationLaboratoryEquipmentCustomService {
   ): Promise<Record<string, any> | undefined> {
     return await this.reservationLaboratoryEquipmentGetSubscriberProfileService.execute(
       subscriberId,
+    );
+  }
+
+  async findAdminReservationDetails(
+    findAdminReservationDetailsDto: FindAdminReservationDetailsDto,
+  ): Promise<PaginationResponseDto<FindAdminReservationDetailsResponseDto>> {
+    return await this.reservationLaboratoryEquipmentFindAdminDetailsService.execute(
+      findAdminReservationDetailsDto,
+    );
+  }
+
+  async findLaboratoriesWithReservations(
+    findLaboratoriesWithReservationsDto: FindLaboratoriesWithReservationsDto,
+  ): Promise<
+    PaginationResponseDto<FindLaboratoriesWithReservationsResponseDto>
+  > {
+    return await this.reservationLaboratoryEquipmentFindLaboratoriesWithReservationsService.execute(
+      findLaboratoriesWithReservationsDto,
     );
   }
 }

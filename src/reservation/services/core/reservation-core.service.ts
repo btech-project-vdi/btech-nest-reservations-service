@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { SessionUserDataDto } from 'src/common/dto/session-user-data-dto';
-import { Paginated } from 'src/common/dto/paginated.dto';
 import { ReservationCreateService } from './reservation-create.service';
 import { ReservationFindAllService } from './reservation-find-all.service';
 import {
@@ -11,6 +10,7 @@ import {
   FindAllReservationsDto,
   FindAllReservationsResponseDto,
 } from 'src/reservation/dto/find-all-reservations.dto';
+import { PaginationResponseDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class ReservationCoreService {
@@ -32,7 +32,7 @@ export class ReservationCoreService {
   async findAll(
     user: SessionUserDataDto,
     findAllReservationsDto: FindAllReservationsDto,
-  ): Promise<Paginated<FindAllReservationsResponseDto>> {
+  ): Promise<PaginationResponseDto<FindAllReservationsResponseDto>> {
     return await this.reservationFindAllService.execute(
       user,
       findAllReservationsDto,

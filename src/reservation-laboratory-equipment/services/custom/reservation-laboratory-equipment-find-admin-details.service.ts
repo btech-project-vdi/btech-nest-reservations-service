@@ -1,29 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Reservation } from '../../entities/reservation.entity';
+import { ReservationLaboratoryEquipment } from '../../entities/reservation-laboratory-equipment.entity';
 import { paginateQueryBuilder } from 'src/common/helpers/paginate-query-builder.helper';
-import { applyTimePeriodFilter } from '../../helpers/apply-time-period-filter.helper';
-import { applyTimeFilter } from '../../helpers/apply-time-filter.helper';
+import { applyTimePeriodFilterRle } from '../../helpers/apply-time-period-filter-rle.helper';
+import { applyTimeFilterRle } from '../../helpers/apply-time-filter-rle.helper';
 import {
-  FindAdminReservationsDto,
-  FindAdminReservationsResponseDto,
-} from 'src/reservation/dto/find-admin-reservations.dto';
-import { formatFindReservationsResponse } from 'src/reservation/helpers/format-find-reservations-response.helper';
-import { ReservationFindEquipmentMapService } from './reservation-find-equipment-map.service';
+  FindAdminReservationDetailsDto,
+  FindAdminReservationDetailsResponseDto,
+} from '../../dto/find-admin-reservation-details.dto';
+import { ReservationFindEquipmentMapService } from 'src/reservation/services/custom/reservation-find-equipment-map.service';
+import { formatAdminReservationDetailsResponse } from '../../helpers/format-admin-reservation-details-response.helper';
 import { PaginationResponseDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
-export class ReservationFindAdminReservationsService {
+export class ReservationLaboratoryEquipmentFindAdminDetailsService {
   constructor(
-    @InjectRepository(Reservation)
-    private readonly reservationRepository: Repository<Reservation>,
+    @InjectRepository(ReservationLaboratoryEquipment)
+    private readonly reservationLaboratoryEquipmentRepository: Repository<ReservationLaboratoryEquipment>,
     private readonly reservationFindEquipmentMapService: ReservationFindEquipmentMapService,
   ) {}
 
   async execute(
-    findAdminReservationsDto: FindAdminReservationsDto,
-  ): Promise<PaginationResponseDto<FindAdminReservationsResponseDto>> {
+    findAdminReservationDetailsDto: FindAdminReservationDetailsDto,
+  ): Promise<PaginationResponseDto<FindAdminReservationDetailsResponseDto>> {
     const {
       laboratoryEquipmentIds,
       subscriberIds,
@@ -35,20 +35,13 @@ export class ReservationFindAdminReservationsService {
       endDate,
       startTime,
       endTime,
-      itemPage,
-      itemLimit,
       ...paginationDto
-    } = findAdminReservationsDto;
-    const queryBuilder = this.reservationRepository
-      .createQueryBuilder('reservation')
-      .leftJoinAndSelect('reservation.reservationLaboratoryEquipment', 'rle')
+    } = findAdminReservationDetailsDto;
+
+    const queryBuilder = this.reservationLaboratoryEquipmentRepository
+      .createQueryBuilder('rle')
+      .leftJoinAndSelect('rle.reservation', 'reservation')
       .select([
-        'reservation.reservationId',
-        'reservation.subscriberId',
-        'reservation.subscriptionDetailId',
-        'reservation.username',
-        'reservation.metadata',
-        'reservation.createdAt',
         'rle.reservationLaboratoryEquipmentId',
         'rle.laboratoryEquipmentId',
         'rle.subscriptionDetailId',
@@ -58,8 +51,15 @@ export class ReservationFindAdminReservationsService {
         'rle.finalHour',
         'rle.metadata',
         'rle.status',
+        'rle.createdAt',
+        'reservation.reservationId',
+        'reservation.subscriberId',
+        'reservation.subscriptionDetailId',
+        'reservation.username',
+        'reservation.metadata',
+        'reservation.createdAt',
       ])
-      .orderBy('reservation.createdAt', 'DESC');
+      .orderBy('rle.createdAt', 'DESC');
 
     if (laboratoryEquipmentIds && laboratoryEquipmentIds.length > 0)
       queryBuilder.andWhere(
@@ -68,10 +68,12 @@ export class ReservationFindAdminReservationsService {
           laboratoryEquipmentIds,
         },
       );
+
     if (subscriberIds && subscriberIds.length > 0)
       queryBuilder.andWhere('reservation.subscriberId IN (:...subscriberIds)', {
         subscriberIds,
       });
+
     if (subscriptionDetailId)
       queryBuilder.andWhere(
         'reservation.subscriptionDetailId = :subscriptionDetailId',
@@ -79,45 +81,51 @@ export class ReservationFindAdminReservationsService {
           subscriptionDetailId,
         },
       );
+
     if (reservationId)
       queryBuilder.andWhere('reservation.reservationId = :reservationId', {
         reservationId,
       });
-    applyTimePeriodFilter(
+
+    applyTimePeriodFilterRle(
       queryBuilder,
       timePeriod,
       startDate,
       endDate,
       dateFilterType,
     );
-    if (startTime || endTime) applyTimeFilter(queryBuilder, startTime, endTime);
-    const paginatedReservations = await paginateQueryBuilder(
+
+    if (startTime || endTime)
+      applyTimeFilterRle(queryBuilder, startTime, endTime);
+
+    const paginatedDetails = await paginateQueryBuilder(
       queryBuilder,
       paginationDto,
     );
+
     const foundLaboratoryEquipmentIds = [
       ...new Set(
-        paginatedReservations.data
-          .flatMap((r) => r.reservationLaboratoryEquipment)
+        paginatedDetails.data
           .map((rle) => rle.laboratoryEquipmentId)
           .filter(Boolean),
       ),
     ];
+
     const equipmentMap = await this.reservationFindEquipmentMapService.execute(
       foundLaboratoryEquipmentIds,
     );
-    const reservationsResponseFormat = formatFindReservationsResponse(
-      paginatedReservations.data,
+
+    const formattedData = formatAdminReservationDetailsResponse(
+      paginatedDetails.data,
       equipmentMap,
-      { itemPage, itemLimit },
     );
 
     return {
-      data: reservationsResponseFormat,
-      total: paginatedReservations.total,
-      page: paginatedReservations.page,
-      limit: paginatedReservations.limit,
-      totalPages: paginatedReservations.totalPages,
+      data: formattedData,
+      total: paginatedDetails.total,
+      page: paginatedDetails.page,
+      limit: paginatedDetails.limit,
+      totalPages: paginatedDetails.totalPages,
     };
   }
 }

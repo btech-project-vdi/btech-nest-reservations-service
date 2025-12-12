@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Paginated } from 'src/common/dto/paginated.dto';
 import { FindSubscribersWithNaturalPersonsResponseDto } from 'src/communications/grpc/dto/find-subscribers-with-natural-persons.dto';
 import {
   FindAvailableLaboratoriesEquipmentsForUserDto,
@@ -15,6 +14,7 @@ import {
 import { FindSubscribersListDto } from 'src/reservation/dto/find-subscribers-list.dto';
 import { FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto } from 'src/common/dto/find-one-laboratory-equipment-by-laboratory-equipment-id';
 import { ReservationFindEquipmentMapService } from './reservation-find-equipment-map.service';
+import { PaginationResponseDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class ReservationCustomService {
@@ -27,7 +27,7 @@ export class ReservationCustomService {
 
   async findAdminReservations(
     findAdminReservationsDto: FindAdminReservationsDto,
-  ): Promise<Paginated<FindAdminReservationsResponseDto>> {
+  ): Promise<PaginationResponseDto<FindAdminReservationsResponseDto>> {
     return await this.reservationFindAdminReservationsService.execute(
       findAdminReservationsDto,
     );
@@ -43,7 +43,9 @@ export class ReservationCustomService {
 
   async findAvailableLaboratoriesEquipmentsForUserWithReservations(
     findAvailableLaboratoriesEquipmentsForUserDto: FindAvailableLaboratoriesEquipmentsForUserDto,
-  ): Promise<Paginated<FindAvailableLaboratoriesEquipmentsForUserResponseDto>> {
+  ): Promise<
+    PaginationResponseDto<FindAvailableLaboratoriesEquipmentsForUserResponseDto>
+  > {
     return await this.reservationFindAvailableLabsWithReservationsService.execute(
       findAvailableLaboratoriesEquipmentsForUserDto,
     );

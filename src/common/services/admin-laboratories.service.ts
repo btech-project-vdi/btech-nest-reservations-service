@@ -6,8 +6,12 @@ import {
   FindAvailableLaboratoriesEquipmentsForUserDto,
   FindAvailableLaboratoriesEquipmentsForUserResponseDto,
 } from '../dto/find-available-laboratories-equipments-for-user.dto';
-import { Paginated } from '../dto/paginated.dto';
+import {
+  FindLaboratoriesWithReservationsFiltersDto,
+  LaboratoryWithReservationsFilterResponseDto,
+} from '../dto/find-laboratories-with-reservations-filters.dto';
 import { NatsService } from 'src/communications/nats';
+import { PaginationResponseDto } from '../dto/pagination.dto';
 
 @Injectable()
 export class AdminLaboratoriesService {
@@ -63,10 +67,23 @@ export class AdminLaboratoriesService {
 
   async findAvailableLaboratoriesEquipmentsForUser(
     findAvailableLaboratoriesEquipmentsForUserDto: FindAvailableLaboratoriesEquipmentsForUserDto,
-  ): Promise<Paginated<FindAvailableLaboratoriesEquipmentsForUserResponseDto>> {
+  ): Promise<
+    PaginationResponseDto<FindAvailableLaboratoriesEquipmentsForUserResponseDto>
+  > {
     return await this.client.send(
       'laboratoryEquipment.findAvailableLaboratoriesEquipmentsForUser',
       findAvailableLaboratoriesEquipmentsForUserDto,
+    );
+  }
+
+  async findLaboratoriesWithReservationsFilters(
+    findLaboratoriesWithReservationsFiltersDto: FindLaboratoriesWithReservationsFiltersDto,
+  ): Promise<
+    PaginationResponseDto<LaboratoryWithReservationsFilterResponseDto>
+  > {
+    return await this.client.send(
+      'laboratoryEquipment.findLaboratoriesWithReservationsFilters',
+      findLaboratoriesWithReservationsFiltersDto,
     );
   }
 }

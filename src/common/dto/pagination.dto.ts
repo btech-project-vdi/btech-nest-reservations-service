@@ -14,3 +14,11 @@ export class PaginationDto {
   @Min(1)
   limit?: number;
 }
+
+export class PaginationResponseDto<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

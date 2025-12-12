@@ -6,17 +6,14 @@ import {
   IsUUID,
   ValidateIf,
   Matches,
-  IsInt,
-  Min,
   IsArray,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { TimePeriod } from '../enums/time-period.enum';
-import { DateFilterType } from '../enums/date-filter-type.enum';
-import { FindAllReservationsResponseDto } from './find-all-reservations.dto';
+import { TimePeriod } from 'src/reservation/enums/time-period.enum';
+import { DateFilterType } from 'src/reservation/enums/date-filter-type.enum';
+import { StatusReservation } from 'src/reservation/enums/status-reservation.enum';
 
-export class FindAdminReservationsDto extends PaginationDto {
+export class FindAdminReservationDetailsDto extends PaginationDto {
   @IsOptional()
   @IsArray({ message: 'laboratoryEquipmentIds debe ser un arreglo' })
   @IsString({
@@ -80,19 +77,29 @@ export class FindAdminReservationsDto extends PaginationDto {
     message: 'endTime debe tener formato HH:MM (24h)',
   })
   endTime?: string;
-
-  // Paginación para items dentro de cada reserva
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  itemPage?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  itemLimit?: number;
 }
 
-export class FindAdminReservationsResponseDto extends FindAllReservationsResponseDto {}
+export class LaboratoryEquipmentInfoDto {
+  laboratoryEquipmentId: string;
+  laboratoryId: string;
+  laboratoryName: string;
+  equipmentName: string;
+}
+
+export class FindAdminReservationDetailsResponseDto {
+  reservationId: string;
+  subscriberId: string;
+  subscriptionDetailId: string;
+  username: string;
+  metadata: Record<string, any>;
+  createdAt: string;
+  reservationDate: string;
+  reservationFinalDate: string | null;
+  reservationLaboratoryEquipmentId: string;
+  laboratoryEquipment: LaboratoryEquipmentInfoDto | null;
+  initialHour: string;
+  finalHour: string;
+  duration: string;
+  detailMetadata: Record<string, any>;
+  status: StatusReservation;
+}

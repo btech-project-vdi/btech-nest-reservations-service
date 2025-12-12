@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Reservation } from '../../entities/reservation.entity';
 import { SessionUserDataDto } from 'src/common/dto/session-user-data-dto';
-import { Paginated } from 'src/common/dto/paginated.dto';
 import { paginate } from 'src/common/helpers/paginate.helper';
 import {
   FindAllReservationsDto,
@@ -11,6 +10,7 @@ import {
 } from 'src/reservation/dto/find-all-reservations.dto';
 import { formatFindReservationsResponse } from 'src/reservation/helpers/format-find-reservations-response.helper';
 import { ReservationFindEquipmentMapService } from '../custom';
+import { PaginationResponseDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class ReservationFindAllService {
@@ -23,7 +23,7 @@ export class ReservationFindAllService {
   async execute(
     user: SessionUserDataDto,
     findAllReservationsDto: FindAllReservationsDto,
-  ): Promise<Paginated<FindAllReservationsResponseDto>> {
+  ): Promise<PaginationResponseDto<FindAllReservationsResponseDto>> {
     const { status, itemPage, itemLimit, ...paginationDto } =
       findAllReservationsDto;
     const queryBuilder = this.reservationRepository

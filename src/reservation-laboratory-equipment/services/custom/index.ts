@@ -7,6 +7,9 @@ export * from './reservation-laboratory-equipment-get-subscriber-profile.service
 export * from './reservation-laboratory-equipment-find-overlapping-reservations.service';
 export * from './reservation-laboratory-equipment-get-laboratory-metadata.service';
 export * from './reservation-laboratory-equipment-assign-credentials.service';
+export * from './reservation-laboratory-equipment-find-admin-details.service';
+export * from './reservation-laboratory-equipment-find-laboratories.service';
+export * from './reservation-laboratory-equipment-get-reservation-counts.service';
 export * from './reservation-laboratory-equipment-custom.service';
 
 import { ReservationLaboratoryEquipmentConfirmListService } from './reservation-laboratory-equipment-confirm-list.service';
@@ -18,7 +21,10 @@ import { ReservationLaboratoryEquipmentGetSubscriberProfileService } from './res
 import { ReservationLaboratoryEquipmentFindOverlappingReservationsService } from './reservation-laboratory-equipment-find-overlapping-reservations.service';
 import { ReservationLaboratoryEquipmentGetLaboratoryMetadataService } from './reservation-laboratory-equipment-get-laboratory-metadata.service';
 import { ReservationLaboratoryEquipmentAssignCredentialsService } from './reservation-laboratory-equipment-assign-credentials.service';
+import { ReservationLaboratoryEquipmentFindAdminDetailsService } from './reservation-laboratory-equipment-find-admin-details.service';
+import { ReservationLaboratoryEquipmentFindLaboratoriesWithReservationsService } from './reservation-laboratory-equipment-find-laboratories.service';
 import { ReservationLaboratoryEquipmentCustomService } from './reservation-laboratory-equipment-custom.service';
+import { ReservationLaboratoryEquipmentGetReservationCountsService } from './reservation-laboratory-equipment-get-reservation-counts.service';
 
 export const RESERVATION_LABORATORY_EQUIPMENT_CUSTOM_SERVICES = [
   ReservationLaboratoryEquipmentConfirmListService,
@@ -30,5 +36,8 @@ export const RESERVATION_LABORATORY_EQUIPMENT_CUSTOM_SERVICES = [
   ReservationLaboratoryEquipmentFindOverlappingReservationsService,
   ReservationLaboratoryEquipmentGetLaboratoryMetadataService,
   ReservationLaboratoryEquipmentAssignCredentialsService,
+  ReservationLaboratoryEquipmentFindAdminDetailsService,
+  ReservationLaboratoryEquipmentFindLaboratoriesWithReservationsService,
   ReservationLaboratoryEquipmentCustomService,
+  ReservationLaboratoryEquipmentGetReservationCountsService,
 ];
