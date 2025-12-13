@@ -3,10 +3,6 @@ import { FindOneByLaboratoryEquipmentIdResponseDto } from '../dto/find-one-by-la
 import { FindOneLaboratoryEquipmentByLaboratoryEquipmentIdResponseDto } from '../dto/find-one-laboratory-equipment-by-laboratory-equipment-id';
 import { FindLaboratoriesByLaboratoriesSubscriptionDetailIdsResponseDto } from '../dto/find-laboratories-by-laboratories-subscription-detail-ids.dto';
 import {
-  FindAvailableLaboratoriesEquipmentsForUserDto,
-  FindAvailableLaboratoriesEquipmentsForUserResponseDto,
-} from '../dto/find-available-laboratories-equipments-for-user.dto';
-import {
   FindLaboratoriesWithReservationsFiltersDto,
   LaboratoryWithReservationsFilterResponseDto,
 } from '../dto/find-laboratories-with-reservations-filters.dto';
@@ -62,17 +58,6 @@ export class AdminLaboratoriesService {
     return await this.client.send(
       'laboratoriesSubscriptionDetail.findReminderMinutesByLaboratoryEquipmentId',
       { laboratoryEquipmentId },
-    );
-  }
-
-  async findAvailableLaboratoriesEquipmentsForUser(
-    findAvailableLaboratoriesEquipmentsForUserDto: FindAvailableLaboratoriesEquipmentsForUserDto,
-  ): Promise<
-    PaginationResponseDto<FindAvailableLaboratoriesEquipmentsForUserResponseDto>
-  > {
-    return await this.client.send(
-      'laboratoryEquipment.findAvailableLaboratoriesEquipmentsForUser',
-      findAvailableLaboratoriesEquipmentsForUserDto,
     );
   }
 

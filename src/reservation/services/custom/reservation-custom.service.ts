@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { FindSubscribersWithNaturalPersonsResponseDto } from 'src/communications/grpc/dto/find-subscribers-with-natural-persons.dto';
-import {
-  FindAvailableLaboratoriesEquipmentsForUserDto,
-  FindAvailableLaboratoriesEquipmentsForUserResponseDto,
-} from 'src/common/dto/find-available-laboratories-equipments-for-user.dto';
 import { ReservationFindAdminReservationsService } from './reservation-find-admin-reservations.service';
 import { ReservationFindSubscribersListService } from './reservation-find-subscribers-list.service';
-import { ReservationFindAvailableLabsWithReservationsService } from './reservation-find-available-labs-with-reservations.service';
 import {
   FindAdminReservationsDto,
   FindAdminReservationsResponseDto,
@@ -21,7 +16,6 @@ export class ReservationCustomService {
   constructor(
     private readonly reservationFindAdminReservationsService: ReservationFindAdminReservationsService,
     private readonly reservationFindSubscribersListService: ReservationFindSubscribersListService,
-    private readonly reservationFindAvailableLabsWithReservationsService: ReservationFindAvailableLabsWithReservationsService,
     private readonly reservationFindEquipmentMapService: ReservationFindEquipmentMapService,
   ) {}
 
@@ -38,16 +32,6 @@ export class ReservationCustomService {
   ): Promise<FindSubscribersWithNaturalPersonsResponseDto> {
     return await this.reservationFindSubscribersListService.execute(
       findSubscribersListDto,
-    );
-  }
-
-  async findAvailableLaboratoriesEquipmentsForUserWithReservations(
-    findAvailableLaboratoriesEquipmentsForUserDto: FindAvailableLaboratoriesEquipmentsForUserDto,
-  ): Promise<
-    PaginationResponseDto<FindAvailableLaboratoriesEquipmentsForUserResponseDto>
-  > {
-    return await this.reservationFindAvailableLabsWithReservationsService.execute(
-      findAvailableLaboratoriesEquipmentsForUserDto,
     );
   }
 
